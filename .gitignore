@@ -4,3 +4,5 @@ bin/config.cfg
 venv/*
 # ignore visualcode files
 .vscode/*
+# ignore test directory
+test/*
