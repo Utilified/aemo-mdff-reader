@@ -1,16 +1,14 @@
+""" Record Class for nem-reader-importer """
 # import statements
-from abc import ABC, ABCMeta, abstractmethod
-"""
-Record Class for nem-reader-importer
-"""
+
 __author__ = "Cohen Robinson"
 MANDATORY = "M"
 REQUIRED = "R"
 NOTREQUIRED = "N"
 
-class Record(metaclass=ABCMeta):
+class Record():
     """
-    Represents a record in the NEM-12 file, 
+    Represents a record in the NEM-12 file,
     all attributes inherit from this class.
     """
     def __init__(self, record_id, attributes):
@@ -21,23 +19,28 @@ class Record(metaclass=ABCMeta):
         self.__attr_len = len(attributes)
         self.__record_data = None
 
-        pass
-    
     def __str__(self):
         return str(self.__record_data)
 
     def __len__(self):
         return self.__attr_len
-    
+
     def read(self, line, delimiter=','):
         """
         Reads the line and checks if the data matches the requirements
         for the record.
+
+        Args:
+            line (str): The line to read.
+        Kwargs:
+            delimiter (str): The delimiter to split the line with.
+        Returns:
+            dict. The 'checked' data::
+                AttributeName: Data
         """
         assert isinstance(line, str)
         data = line.split(delimiter)
         self.__record_data = self.check(data)
-        pass 
 
     def check(self, data):
         """
@@ -49,7 +52,7 @@ class Record(metaclass=ABCMeta):
         # check if length of data matches expectation
         if len(data) < len(self):
             raise NotEnoughValuesError()
-        elif len(data) > len(self):
+        if len(data) > len(self):
             raise TooManyValuesError()
         # check if field requirements matches each field
         for i in range(len(data)):
@@ -62,20 +65,14 @@ class Record(metaclass=ABCMeta):
             transformed_data[attribute_name] = data[i]
         return transformed_data
 
-    pass
-
 class RecordError(Exception):
     "Raised when there is a row error."
-    pass
 
 class TooManyValuesError(RecordError):
     "Raised when there is too many values in record"
-    pass
 
 class NotEnoughValuesError(RecordError):
     "Raised when there is not enough values in record"
-    pass
 
 class IncorrectValueError(RecordError):
     "Raised when a value is incorrect"
-    pass
