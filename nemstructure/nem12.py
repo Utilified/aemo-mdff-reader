@@ -1,4 +1,4 @@
-"NMI data details record for nem-reader-imported"
+"""NMI data details record for nem-reader-imported"""
 # import statements
 from nemstructure.record import Record, MANDATORY, REQUIRED, NOTREQUIRED
 ATTRIBUTES = {}
