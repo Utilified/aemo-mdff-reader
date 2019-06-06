@@ -39,7 +39,7 @@ class Record():
         assert isinstance(record, Record)
         self.subrecords.append(record)
 
-    def read(self, line, delimiter=','):
+    def read(self, data):
         """
         Reads the line and checks if the data matches the requirements
         for the record.
@@ -52,11 +52,10 @@ class Record():
             dict. The 'checked' data::
                 AttributeName: Data
         """
-        assert isinstance(line, str)
-        data = line.split(delimiter)
+        assert isinstance(data, list)
         self.__record_data = self.check(data)
         map(lambda item: setattr(self, *item),
-            self.__record_data.items().iteritems())
+            self.__record_data.items())
 
     def check(self, data):
         """
@@ -69,16 +68,19 @@ class Record():
         transformed_data = {}
         # check if length of data matches expectation
         if len(data) < len(self):
-            raise NotEnoughValuesError()
+            raise NotEnoughValuesError("Got %d, expected %d" % (len(data), len(self)))
         if len(data) > len(self):
-            raise TooManyValuesError()
+            raise TooManyValuesError("Got %d, expected %d" % (len(data), len(self)))
+        if int(data[0]) != self.record_id:
+            raise RecordError("Wrong record identifier, expected %s" % self.record_id)
         # check if field requirements matches each field
         for i in range(len(data)):
             attribute_name = self.__attr_spec[i][0]
-            attribute_requirement = self.__attr_spec[i][1]
+            # TODO: implement requirement checking
+            #attribute_requirement = self.__attr_spec[i][1]
 
-            if attribute_requirement == MANDATORY and data[i] == "":
-                raise IncorrectValueError()
+            #if attribute_requirement == MANDATORY and data[i] == "":
+                #raise IncorrectValueError()
 
             transformed_data[attribute_name] = data[i]
         return transformed_data

@@ -43,6 +43,7 @@ class AccummulationData(Record):
     Represenents a NMI Data details record
     in the NEM-12 file.
     """
+    RECORD_ID = ACCUMULATION_RECORD_ID
     def __init__(self):
         super().__init__(ACCUMULATION_RECORD_ID, ATTRIBUTES[ACCUMULATION_RECORD_ID])
 
@@ -51,5 +52,6 @@ class B2BDetails(Record):
     Represenents a NMI Data details record
     in the NEM-12 file.
     """
+    RECORD_ID = B2B_RECORD_ID
     def __init__(self):
-        super().__init__(ACCUMULATION_RECORD_ID, ATTRIBUTES[ACCUMULATION_RECORD_ID])
+        super().__init__(B2B_RECORD_ID, ATTRIBUTES[B2B_RECORD_ID])
