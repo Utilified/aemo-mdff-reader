@@ -32,6 +32,7 @@ class Reader():
             current_header = None
             current_nmi = None
             current_interval = None
+            # iterate and read each row
             for row_no in range(len(file_reader)):
                 row = file_reader[row_no]
                 current_row = None
@@ -57,7 +58,7 @@ class Reader():
                 elif int(row[0]) == B2BDetails.RECORD_ID:
                     current_row = B2BDetails()
                     current_row.read(row)
-                    current_nmi.add_subrecord(current_row)
+                    current_interval.add_subrecord(current_row)
                 elif int(row[0]) == AccummulationData13.RECORD_ID:
                     current_row = AccummulationData13()
                     current_row.read(row)
