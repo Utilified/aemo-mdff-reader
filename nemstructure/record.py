@@ -18,12 +18,26 @@ class Record():
         self.__attr_spec = attributes
         self.__attr_len = len(attributes)
         self.__record_data = None
+        self.subrecords = []
+
+    def __getattr__(self, name):
+        return self.__record_data[name]
 
     def __str__(self):
         return str(self.__record_data)
 
     def __len__(self):
         return self.__attr_len
+
+    def add_subrecord(self, record):
+        """
+        Adds a subrecord to the class
+
+        Args:
+            record (Record): The record to append
+        """
+        assert isinstance(record, Record)
+        self.subrecords.append(record)
 
     def read(self, line, delimiter=','):
         """
@@ -41,12 +55,16 @@ class Record():
         assert isinstance(line, str)
         data = line.split(delimiter)
         self.__record_data = self.check(data)
+        map(lambda item: setattr(self, *item),
+            self.__record_data.items().iteritems())
 
     def check(self, data):
         """
         Checks if the data matches the requirements for the record.
 
-        Returns a dict of the loaded data, otherwise raises a RecordError.
+        Returns:
+             dict. The `loaded` data::
+                AttributeName: Data
         """
         transformed_data = {}
         # check if length of data matches expectation
@@ -59,7 +77,7 @@ class Record():
             attribute_name = self.__attr_spec[i][0]
             attribute_requirement = self.__attr_spec[i][1]
 
-            if attribute_requirement == MANDATORY & data[i] == "":
+            if attribute_requirement == MANDATORY and data[i] == "":
                 raise IncorrectValueError()
 
             transformed_data[attribute_name] = data[i]
