@@ -14,7 +14,7 @@ class Reader():
     A reader class for the NEM12/13 file.
     """
     def __init__(self, filename):
-        self.__filename = filename
+        self.filename = filename
         self.data = self.read(filename)
 
     @staticmethod
