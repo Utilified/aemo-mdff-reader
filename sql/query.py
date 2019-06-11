@@ -1,0 +1,108 @@
+""" Contains classes and functions used for building queries in SQL """
+# import statements
+
+IMPORT_TABLE = 'imports'
+NMI_TABLE = 'nmi'
+CHANNEL_TABLE = 'channel'
+INTERVAL_TYPE_TABLE = 'interval_type'
+INTERVAL_TABLE = 'interval'
+INTERVAL_DATA_TABLE = 'interval_data'
+INTERVAL_EVENT_TABLE = 'interval_event'
+INTERVAL_B2B_TABLE = 'interval_b2b'
+ACCUMULATION_DATA_TABLE = 'accumulation_data'
+ACCUMULATION_B2B_TABLE = 'accumulation_b2b'
+
+COLUMNS = {
+    IMPORT_TABLE: [
+        'filename',
+        'VersionHeader',
+        'DateTime',
+        'FromParticipant',
+        'ToParticipant'
+    ],
+    NMI_TABLE: [
+        'NMI',
+        'NMIConfiguration'
+    ],
+    CHANNEL_TABLE: [
+        'NMI',
+        'RegisterID',
+        'NMISuffix',
+        'MDMDataStreamIdentifier',
+        'MeterSerialNumber'
+    ],
+    INTERVAL_TYPE_TABLE: [
+        'UOM',
+        'IntervalLength',
+        'NextScheduledReadDate',
+        'channelID',
+        'importID'
+    ],
+    INTERVAL_TABLE: [
+        'IntervalDate',
+        'QualityMethod',
+        'ReasonCode',
+        'ReasonDescription',
+        'UpdateDateTime',
+        'MSATSLoadDateTime',
+        'typeID'
+    ],
+    INTERVAL_DATA_TABLE: [
+        'valueID',
+        'value',
+        'intervalID'
+    ],
+    INTERVAL_EVENT_TABLE: [
+        'StartInterval',
+        'EndInterval',
+        'QualityMethod',
+        'ReasonCode',
+        'ReasonDescription',
+        'intervalID'
+    ],
+    INTERVAL_B2B_TABLE: [
+        'TransCode',
+        'RetServiceOrder',
+        'ReadDateTime',
+        'IndexRead',
+        'eventID'
+    ],
+    ACCUMULATION_DATA_TABLE: [],
+    ACCUMULATION_B2B_TABLE: []
+}
+
+class QueryBuilder():
+    """
+    Builds a query from given information.
+    """
+    COLUMN_GEN = 'NULLIF("%s", "")'
+    NUM_WRAPPER = 'CAST(%s AS %s)'
+    DECIMAL_TYPE_1 = 'DECIMAL(18, 3)'
+    DECIMAL_TYPE_2 = 'DECIMAL(22, 5)'
+    INT_TYPE = 'INT'
+    INSERT_QUERY = '''INSERT INTO %s
+                      (%s)
+                   '''
+    VALUES_QUERY = '''VALUES (%s)'''
+
+    @staticmethod
+    def insert_query(table, data):
+        """
+        Insert query builder
+        """
+        query = "INSERT INTO %s\n" % table
+        query += tuple(COLUMNS[table]) + '\n'
+        for instance in data:
+            list_value = [QueryBuilder.COLUMN_GEN % value for value in instance]
+            query += "VALUES " + tuple(list_value) + ',\n'
+        query = query[:-2] + ";"
+        return query
+
+    @staticmethod
+    def get_id_query(id_column, table):
+        """
+        Most recent ID retriever
+        """
+        query = "SELECT max(`%s`) FROM `%s`;" % (id_column, table)
+
+        return query
