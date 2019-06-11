@@ -91,18 +91,21 @@ class QueryBuilder():
         Insert query builder
         """
         query = "INSERT INTO %s\n" % table
-        query += tuple(COLUMNS[table]) + '\n'
+        query += str(tuple(COLUMNS[table])) + '\n'
         for instance in data:
             list_value = [QueryBuilder.COLUMN_GEN % value for value in instance]
-            query += "VALUES " + tuple(list_value) + ',\n'
+            query += "VALUES ("
+            for value in list_value:
+                query += value + ', '
+            query = query[:-2] + "),\n"
         query = query[:-2] + ";"
         return query
 
     @staticmethod
-    def get_id_query(id_column, table):
+    def get_id_query():
         """
         Most recent ID retriever
         """
-        query = "SELECT max(`%s`) FROM `%s`;" % (id_column, table)
+        query = "SELECT LAST_INSERT_ID();"
 
         return query

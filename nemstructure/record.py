@@ -36,7 +36,7 @@ class Record():
         Args:
             record (Record): The record to append
         """
-        assert isinstance(record, Record)
+        #assert issubclass(record, Record)
         self.subrecords.append(record)
 
     def read(self, data):
