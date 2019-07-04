@@ -18,7 +18,7 @@ class Storer():
             self.__connection = self.connect(**credentials)
 
     @staticmethod
-    def connect(db_credentials):
+    def connect(***args, **kwargs):
         """
         Connects to a MySQL database with the
         given credentials.
@@ -32,10 +32,10 @@ class Storer():
         #assert isinstance(db_credentials, DBCredentials)
         # connect to server
         connection = pymysql.connect(
-            host=db_credentials.host,
-            user=db_credentials.user,
-            password=db_credentials.password,
-            db=db_credentials.schema,
+            host=host,
+            user=user,
+            password=password,
+            db=schema,
             charset='utf8mb4',
             cursorclass=pymysql.cursors.Cursor     # TODO: check if suitable cursor
         )
