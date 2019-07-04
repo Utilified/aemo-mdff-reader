@@ -18,7 +18,7 @@ class Storer():
             self.__connection = self.connect(**credentials)
 
     @staticmethod
-    def connect(***args, **kwargs):
+    def connect(host, port, user, password, schema, Directory):
         """
         Connects to a MySQL database with the
         given credentials.
