@@ -66,10 +66,10 @@ class IntervalData(Record):
     """
     RECORD_ID = INTERVAL_RECORD_ID
     def __init__(self, interval_type):
-        intervals = [("IntervalValue%d" % i, MANDATORY)
+        self.intervals = [("IntervalValue%d" % i, MANDATORY)
                      for i in range(1, MINUTES_DAILY // int(interval_type) + 1)]
         attributes = ATTRIBUTES[INTERVAL_RECORD_ID][:2] + \
-            intervals + ATTRIBUTES[INTERVAL_RECORD_ID][3:]
+            self.intervals + ATTRIBUTES[INTERVAL_RECORD_ID][3:]
         super().__init__(INTERVAL_RECORD_ID, attributes)
 
 class IntervalEvent(Record):
