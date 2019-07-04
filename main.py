@@ -14,13 +14,13 @@ def main():
     config = configparser.ConfigParser()
     config.read(CONFIG_DIR)
     # read all files and store in memory
-    files_read = [Reader(os.path.join(config[SECTION]['Directory'], filename)) 
+    files_read = [os.path.join(config[SECTION]['Directory'], filename)
                   for filename in os.listdir(config[SECTION]['Directory'])]
     # now begin iterating through read files and store in DB
     db_credentials = None
     storer = Storer(db_credentials)
-    for reader in files_read:
-        storer.load_reader(reader)
+    for files in files_read:
+        storer.load_reader(Reader(files))
 
 if __name__ == "__main__":
     main()

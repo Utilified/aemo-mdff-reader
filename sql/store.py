@@ -93,7 +93,7 @@ class Storer():
             for interval_row in data_intervals[row]:
                 query += "\n" + QueryBuilder.insert_query(INTERVAL_TABLE, [interval_row[0]]) + "\n" + "SET @intervalID = " + QueryBuilder.get_id_query()
                 query += "\n" + QueryBuilder.insert_query(INTERVAL_DATA_TABLE, list(interval_row[1]))
-        with open("example.sql", "w") as file:
+        with open("example.sql", "a") as file:
             file.write(query)
         ''' with self.__connection.cursor() as cursor:
             cursor.execute(query)'''
