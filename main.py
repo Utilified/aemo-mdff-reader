@@ -19,8 +19,12 @@ def main():
     # now begin iterating through read files and store in DB
     db_credentials = None
     storer = Storer(db_credentials)
+    no_files = 0
     for files in files_read:
+        no_files += 1
         storer.load_reader(Reader(files))
+        if no_files > 100:
+            break
 
 if __name__ == "__main__":
     main()
