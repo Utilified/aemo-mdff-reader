@@ -90,11 +90,12 @@ class QueryBuilder():
         """
         Insert query builder
         """
-        query = "INSERT INTO %s\n" % table
-        query += str(tuple(COLUMNS[table])) + '\n'
+        query = "INSERT IGNORE INTO `%s`\n" % table
+        query += "(" + ','.join(['`' + item + '`' for item in COLUMNS[table]]) + ")" + '\n'
+        query += "VALUES "
         for instance in data:
-            list_value = [QueryBuilder.COLUMN_GEN % value for value in instance]
-            query += "VALUES ("
+            list_value = [(QueryBuilder.COLUMN_GEN % value if '@' not in value and 'STR' not in value else value) for value in instance ]
+            query += "("
             for value in list_value:
                 query += value + ', '
             query = query[:-2] + "),\n"
@@ -106,6 +107,6 @@ class QueryBuilder():
         """
         Most recent ID retriever
         """
-        query = "SELECT LAST_INSERT_ID();"
+        query = "LAST_INSERT_ID();"
 
         return query

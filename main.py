@@ -17,13 +17,10 @@ def main():
     files_read = [Reader(os.path.join(config[SECTION]['Directory'], filename)) 
                   for filename in os.listdir(config[SECTION]['Directory'])]
     # now begin iterating through read files and store in DB
-    storer = Storer(None)
+    db_credentials = None
+    storer = Storer(db_credentials)
     for reader in files_read:
         storer.load_reader(reader)
 
-    
-
-
 if __name__ == "__main__":
     main()
-    pass
