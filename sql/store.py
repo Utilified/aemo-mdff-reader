@@ -45,56 +45,73 @@ class Storer():
         """
         loads reader
         """
-        # first store header and filename
-        data = [[reader.filename,
-                reader.data.VersionHeader,
-                f'STR_TO_DATE("{reader.data.DateTime}", "%Y%m%d%h%i%s")',
-                reader.data.FromParticipant,
-                reader.data.ToParticipant]]
-        query = QueryBuilder.insert_query(IMPORT_TABLE, data) \
-                + "\n" + "SET @importID = " + QueryBuilder.get_id_query()
-        
-        # now store nmi, channels and interval type
-        data_nmi = []
-        data_channel = []
-        data_interval_type = []
-        data_intervals = []
-        for subrecord in reader.data.subrecords:
-            if isinstance(subrecord, list):
-                continue
-            if subrecord.RecordIndicator == "200":
-                data_interval = []
-                data_nmi.append([subrecord.NMI, subrecord.NMIConfiguration])
-                data_channel.append([subrecord.NMI,
-                                     subrecord.RegisterID,
-                                     subrecord.NMISuffix,
-                                     subrecord.MDMDataStreamIdentifier,
-                                     subrecord.MeterSerialNumber])
-                data_interval_type.append([subrecord.UOM,
-                                            subrecord.IntervalLength,
-                                            f'STR_TO_DATE("{subrecord.NextScheduledReadDate}", "%Y%m%d%h%i%s")',
-                                            "@channelID",
-                                            "@importID"])
-                # add each interval
-                for subsubrecord in subrecord.subrecords:
-                    interval_data = [(key[0].replace("IntervalValue", ""), subsubrecord.__getattr__(key[0]), "@intervalID") for key in subsubrecord.intervals]
-                    data_interval.append(([f'STR_TO_DATE("{subsubrecord.IntervalDate}", "%Y%m%d")',
-                                          subsubrecord.QualityMethod,
-                                          subsubrecord.ReasonCode,
-                                          subsubrecord.ReasonDescription,
-                                          f'STR_TO_DATE("{subsubrecord.UpdateDateTime}", "%Y%m%d%h%i%s")',
-                                          f'STR_TO_DATE("{subsubrecord.MSATSLoadDateTime}", "%Y%m%d%h%i%s")',
-                                          "@typeID"], interval_data))
-                    
-                data_intervals.append(data_interval)
-        query += QueryBuilder.insert_query(NMI_TABLE, data_nmi)
-        for row in range(len(data_channel)):
-            query += "\n" + QueryBuilder.insert_query(CHANNEL_TABLE, [data_channel[row]]) + "\n" + "SET @channelID = " + QueryBuilder.get_id_query() + "\n" + QueryBuilder.insert_query(INTERVAL_TYPE_TABLE, [data_interval_type[row]]) + "\n" + "SET @typeID = " + QueryBuilder.get_id_query()
-            for interval_row in data_intervals[row]:
-                query += "\n" + QueryBuilder.insert_query(INTERVAL_TABLE, [interval_row[0]]) + "\n" + "SET @intervalID = " + QueryBuilder.get_id_query()
-                query += "\n" + QueryBuilder.insert_query(INTERVAL_DATA_TABLE, list(interval_row[1]))
         with self.__connection.cursor() as cursor:
-            cursor.execute(query)
+            # first store header and filename
+            data = [[reader.filename.replace('\\', '/'),
+                    reader.data.VersionHeader,
+                    f'STR_TO_DATE("{reader.data.DateTime}", "%Y%m%d%h%i%s")',
+                    reader.data.FromParticipant,
+                    reader.data.ToParticipant]]
+            query = QueryBuilder.insert_query(IMPORT_TABLE, data)
+            resultset = cursor.execute(query)
+            if resultset == 0:
+                pass
+            cursor.execute("SET @importID = " + QueryBuilder.get_id_query())
+            # now store nmi, channels and interval type
+            data_nmi = []
+            data_channel = []
+            data_interval_type = []
+            data_intervals = []
+            for subrecord in reader.data.subrecords:
+                if isinstance(subrecord, list):
+                    continue
+                if subrecord.RecordIndicator == "200":
+                    data_interval = []
+                    data_nmi.append([subrecord.NMI, subrecord.NMIConfiguration])
+                    data_channel.append([subrecord.NMI,
+                                        subrecord.RegisterID,
+                                        subrecord.NMISuffix,
+                                        subrecord.MDMDataStreamIdentifier,
+                                        subrecord.MeterSerialNumber])
+                    data_interval_type.append([subrecord.UOM,
+                                                subrecord.IntervalLength,
+                                                f'STR_TO_DATE("{subrecord.NextScheduledReadDate}", "%Y%m%d%h%i%s")',
+                                                "@channelID",
+                                                "@importID"])
+                    # add each interval
+                    for subsubrecord in subrecord.subrecords:
+                        interval_data = [(key[0].replace("IntervalValue", ""), subsubrecord.__getattr__(key[0]), "@intervalID") for key in subsubrecord.intervals]
+                        data_interval.append(([f'STR_TO_DATE("{subsubrecord.IntervalDate}", "%Y%m%d")',
+                                            subsubrecord.QualityMethod,
+                                            subsubrecord.ReasonCode,
+                                            subsubrecord.ReasonDescription,
+                                            f'STR_TO_DATE("{subsubrecord.UpdateDateTime}", "%Y%m%d%h%i%s")',
+                                            f'STR_TO_DATE("{subsubrecord.MSATSLoadDateTime}", "%Y%m%d%h%i%s")',
+                                            "@typeID"], interval_data))
+                        
+                    data_intervals.append(data_interval)
+            query = QueryBuilder.insert_query(NMI_TABLE, data_nmi)
+            resultset = cursor.execute(query)
+
+            for row in range(len(data_channel)):
+                query = QueryBuilder.insert_query(CHANNEL_TABLE, [data_channel[row]])
+                resultset = cursor.execute(query)
+                if resultset == 0:
+                    query = "SELECT channelID FROM `nem`.`channel` WHERE `NMI` = %s AND `RegisterID` = %s AND `MeterSerialNumber` = %s"
+                    cursor.execute(query, (row[0], row[1], row[4]))
+                    result = cursor.fetchone()
+                    query = "SET @channelID = " + result
+                else:
+                    query = "SET @channelID = " + QueryBuilder.get_id_query()
+                cursor.execute(QueryBuilder.insert_query(INTERVAL_TYPE_TABLE, [data_interval_type[row]]))
+                cursor.execute("SET @typeID = " + QueryBuilder.get_id_query())
+                for interval_row in data_intervals[row]:
+                    query = QueryBuilder.insert_query(INTERVAL_TABLE, [interval_row[0]])
+                    cursor.execute(query) 
+                    query = "SET @intervalID = " + QueryBuilder.get_id_query()
+                    cursor.execute(query) 
+                    query = QueryBuilder.insert_query(INTERVAL_DATA_TABLE, list(interval_row[1]))
+                    cursor.execute(query) 
 
     def close(self):
         """
