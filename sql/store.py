@@ -83,18 +83,19 @@ class Storer():
                     data_interval_type.append([subrecord.UOM,
                                                 subrecord.IntervalLength,
                                                 f'STR_TO_DATE("{subrecord.NextScheduledReadDate}", "%Y%m%d%k%i%s")',
-                                                channelID,
+                                                    channelID,
                                                 importID])
                     # add each interval
                     for subsubrecord in subrecord.subrecords:
-                        interval_data = [(key[0].replace("IntervalValue", ""), subsubrecord.__getattr__(key[0]), intervalID) for key in subsubrecord.intervals]
-                        data_interval.append([[f'STR_TO_DATE("{subsubrecord.IntervalDate}", "%Y%m%d")',
-                                            subsubrecord.QualityMethod,
-                                            subsubrecord.ReasonCode,
-                                            subsubrecord.ReasonDescription,
-                                            f'STR_TO_DATE("{subsubrecord.UpdateDateTime}", "%Y%m%d%k%i%s")',
-                                            f'STR_TO_DATE("{subsubrecord.MSATSLoadDateTime}", "%Y%m%d%k%i%s")',
-                                            typeID], interval_data])
+                        if subsubrecord.RecordIndicator == "300":
+                            interval_data = [(key[0].replace("IntervalValue", ""), subsubrecord.__getattr__(key[0]), intervalID) for key in subsubrecord.intervals]
+                            data_interval.append([[f'STR_TO_DATE("{subsubrecord.IntervalDate}", "%Y%m%d")',
+                                                subsubrecord.QualityMethod,
+                                                subsubrecord.ReasonCode,
+                                                subsubrecord.ReasonDescription,
+                                                f'STR_TO_DATE("{subsubrecord.UpdateDateTime}", "%Y%m%d%k%i%s")',
+                                                f'STR_TO_DATE("{subsubrecord.MSATSLoadDateTime}", "%Y%m%d%k%i%s")',
+                                                typeID], interval_data])
                         
                     data_intervals.append(data_interval)
             query = QueryBuilder.insert_query(NMI_TABLE, data_nmi)
