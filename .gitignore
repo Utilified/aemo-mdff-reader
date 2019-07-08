@@ -1,5 +1,5 @@
 # ignore configuration file for privacy
-bin/config.cfg
+bin/*.cfg
 # ignore venv
 venv/*
 # ignore visualcode files
