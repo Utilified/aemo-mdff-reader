@@ -16,8 +16,8 @@ def main():
     config.read(CONFIG_DIR)
     # read all files and store in memory
     files_read = [file
-                 for path, subdir, files in os.walk(CONFIG_DIR)
-                 for file in glob(os.path.join(path, '.csv'))]
+                 for path, subdir, files in os.walk(config[SECTION]['Directory'])
+                 for file in glob(os.path.join(path, '*.csv'))]
     # now begin iterating through read files and store in DB
     storer = Storer(dict(config[SECTION]))
     no_files = 0
