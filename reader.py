@@ -70,8 +70,4 @@ class Reader():
                     current_interval.add_subrecord(current_row)
                 else:
                     # EOF
-                    current_row = EndRecord()
-                    current_row.read(["900"])
-                    current_header.add_subrecord(row)
-                    break
         return current_header
