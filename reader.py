@@ -68,6 +68,4 @@ class Reader():
                     current_row = B2BDetails13()
                     current_row.read(row)
                     current_interval.add_subrecord(current_row)
-                else:
-                    # EOF
         return current_header
