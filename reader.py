@@ -71,7 +71,7 @@ class Reader():
                 else:
                     # EOF
                     current_row = EndRecord()
-                    current_row.read(row)
+                    current_row.read(["900"])
                     current_header.add_subrecord(row)
                     break
         return current_header
