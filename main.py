@@ -3,7 +3,7 @@ from sql.store import *
 from sql.query import *
 import configparser
 import os
-from pathlib import Path
+from glob import glob
 
 CONFIG_DIR = 'bin//config.cfg'
 SECTION = 'TEST'
@@ -15,7 +15,9 @@ def main():
     config = configparser.ConfigParser()
     config.read(CONFIG_DIR)
     # read all files and store in memory
-    files_read = list(Path(".").rglob("*.csv"))
+    files_read = [file
+                 for path, subdir, files in os.walk(CONFIG_DIR)
+                 for file in glob(os.path.join(path, '.csv'))]
     # now begin iterating through read files and store in DB
     storer = Storer(dict(config[SECTION]))
     no_files = 0
