@@ -57,7 +57,7 @@ class Storer():
             query = QueryBuilder.insert_query(IMPORT_TABLE, data)
             resultset = cursor.execute(query)
             if resultset == 0:
-                pass
+                return None
             cursor.execute("SELECT importID FROM imports WHERE filename LIKE %s", (data[0][0]))
             importID = str(cursor.fetchone()[0])
             print(importID)
@@ -104,8 +104,8 @@ class Storer():
             for row in range(len(data_channel)):
                 query = QueryBuilder.insert_query(CHANNEL_TABLE, [data_channel[row]])
                 resultset = cursor.execute(query)
-                query = "SELECT channelID FROM `nem`.`channel` WHERE `NMI` = %s AND `RegisterID` = %s AND `MeterSerialNumber` = %s"
-                cursor.execute(query, (data_channel[row][0], data_channel[row][1], data_channel[row][4]))
+                query = "SELECT channelID FROM `nem`.`channel` WHERE `NMI` = %s AND `NMISuffix` = %s AND `MeterSerialNumber` = %s"
+                cursor.execute(query, (data_channel[row][0], data_channel[row][2], data_channel[row][4]))
                 channelID = str(cursor.fetchone()[0])
                 data_interval_type[row][-2] = channelID
                 cursor.execute(QueryBuilder.insert_query(INTERVAL_TYPE_TABLE, [data_interval_type[row]]))
