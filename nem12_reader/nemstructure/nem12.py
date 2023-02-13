@@ -1,6 +1,6 @@
 """NMI data details record for nem-reader-imported"""
 # import statements
-from nemstructure.record import Record, MANDATORY, REQUIRED, NOTREQUIRED
+from .record import Record, MANDATORY, REQUIRED, NOTREQUIRED
 ATTRIBUTES = {}
 MINUTES_DAILY = 24 * 60
 

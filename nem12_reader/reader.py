@@ -2,12 +2,12 @@
 # import statements
 import csv
 
-from nemstructure.header import Header
-from nemstructure.end import EndRecord
-from nemstructure.nem12 import NMIData, IntervalData
-from nemstructure.nem12 import IntervalEvent, B2BDetails
-from nemstructure.nem13 import AccummulationData as AccummulationData13
-from nemstructure.nem13 import B2BDetails as B2BDetails13
+from .nemstructure import Header
+from .nemstructure import EndRecord
+from .nemstructure import NMIData, IntervalData
+from .nemstructure import IntervalEvent, B2BDetails
+from .nemstructure import AccummulationData as AccummulationData13
+from .nemstructure import B2BDetails as B2BDetails13
 
 class Reader():
     """
