@@ -1,6 +1,6 @@
 """ enem12 for nem-reader-importer """
 # import statements
-from nemstructure.record import Record, REQUIRED
+from .record import Record, REQUIRED
 
 __author__ = "Cohen Robinson"
 ATTRIBUTES = {}
