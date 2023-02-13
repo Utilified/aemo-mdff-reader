@@ -1,9 +1,8 @@
 # ignore venv
-venv/*
+venv
 # ignore visualcode files
-.vscode/*
+.vscode
 # ignore test directory
 test/*
 
-__pycache__/*
-*/__pycache__/*
+__pycache__

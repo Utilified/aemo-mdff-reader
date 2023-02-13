@@ -1,6 +1,6 @@
 """ Header Class for nem-reader-importer."""
 # import statements
-from nemstructure.record import Record, MANDATORY
+from .record import Record, MANDATORY
 
 RECORD_ID = 100
 ATTRIBUTES = [
