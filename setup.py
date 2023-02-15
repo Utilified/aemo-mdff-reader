@@ -9,5 +9,9 @@ setup(
         'nem12_reader',
         'nem12_reader.*'
     ]),
-    python_requires='>=3.8'
+    python_requires='>=3.8',
+    install_requires=[
+        'PyMySQL>=1.0.2',
+        'wrapt>=1.11.1'
+    ]
 )
