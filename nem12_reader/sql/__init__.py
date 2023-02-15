@@ -1,2 +1,2 @@
-from query import *
-from store import *
+from .query import *
+from .store import *
