@@ -1,6 +1,5 @@
 from nem12_reader import Reader
-from nem12_reader.sql.store import *
-from nem12_reader.sql.query import *
+from nem12_reader.sql import *
 import configparser
 import os
 from glob import glob

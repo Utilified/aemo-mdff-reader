@@ -2,7 +2,7 @@
 
 # import statements
 import pymysql.cursors
-from sql.query import *
+from .query import *
 import os
 
 # Load queries once session is imported
