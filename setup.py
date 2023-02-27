@@ -13,7 +13,7 @@ setup(
     install_requires=[
         'PyMySQL>=1.0.2',
         'wrapt>=1.11.1',
-        'numpy>=1.24.2'
+        'numpy>=1.24.2',
         'pandas>=1.5.3',
         'python-dateutil>=2.8.2',
         'pytz>=2022.7.1'
