@@ -1,6 +1,7 @@
 "NMI data details record for nem-reader-imported"
 # import statements
 from .record import Record, MANDATORY, REQUIRED, NOTREQUIRED
+
 ATTRIBUTES = {}
 
 ACCUMULATION_RECORD_ID = 250

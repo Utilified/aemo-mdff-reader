@@ -1,98 +1,179 @@
 """ Record Class for nem-reader-importer """
 # import statements
+from abc import ABC, abstractmethod
 
-__author__ = "Cohen Robinson"
 MANDATORY = "M"
 REQUIRED = "R"
 NOTREQUIRED = "N"
 
-class Record():
+
+class NEMField(ABC):
     """
-    Represents a record in the NEM-12 file,
-    all attributes inherit from this class.
+    Represents a field within a NEM-12 record.
+
+    key: Label for the field.
+    type: Variable type of the field.  
+    length: Length of the field.
+    required: One of M (Mandatory), R (Required) or N (Not Required).
     """
-    def __init__(self, record_id, attributes):
-        assert isinstance(record_id, int) and isinstance(attributes, list)
-        self.record_id = record_id
-        # assigns an expectation of attributes
-        self.__attr_spec = attributes
-        self.__attr_len = len(attributes)
-        self.__record_data = None
-        self.subrecords = []
 
-    def __getattr__(self, name):
-        return self.__record_data[name]
+    def __init__(self, key: str, type: any, length: int,
+                 required: str):
+        self.__key = key
+        self.__type = type
+        self.__length = length
+        self.__required = required
 
-    def __str__(self):
-        return str(self.__record_data)
+    def __str__(self) -> str:
+        return self.__key
 
-    def __len__(self):
-        return self.__attr_len
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.__key}, \
+                 {self.__type}, {self.__required})"
 
-    def add_subrecord(self, record):
+    def __len__(self) -> int:
+        return self.__length
+
+    def key(self) -> str:
+        """Returns the key assigned to the field."""
+        return self.__key
+
+    def type(self) -> any:
+        """Returns the type of the field."""
+        return self.__type
+
+    @property
+    def required(self) -> str:
+        """Returns if the field is mandatory, required or not required."""
+        return self.__required
+
+    def validate(self, value: any, strict: bool = True) -> bool:
+        """Returns if the field is valid, or not."""
+        is_type = True
+        try:
+            # test if value is type
+            if value:
+                self.type()(value)
+
+            # test if value is greater than length
+            if len(value) > len(self):
+                raise ValueError()
+
+            # test if value not provided and is mandatory
+            if (not len(value)) and (self.required in (MANDATORY)) \
+                    and strict:
+                raise ValueError()
+
+        except ValueError:
+            is_type = False
+
+        return is_type
+
+
+class Record(ABC):
+    """
+    Abstract class representing a record within a NEM12 file.
+    """
+    RECORD_ID = None
+    FIELDS = None
+
+    def __init__(self):
+        self.__values = None
+        self.__children = []
+        self.__parent = None
+        self.__value_dict = {str(f): None for f in self.FIELDS}
+
+        pass
+
+    def __len__(self): return len(self.FIELDS)
+
+    def __str__(self) -> str: return super().__str__()
+
+    def __repr__(self) -> str: return super().__repr__()
+
+    def __getitem__(self, __item: str) -> any:
+        return self.__value_dict[__item]
+
+    def __setitem__(self, __item: str, __value: any) -> any:
+        self.__value_dict[__item] = __value
+        return None
+
+    @property
+    def fields(self) -> list: return self.FIELDS
+
+    @property
+    def id(self) -> int: return self.RECORD_ID
+
+    @property
+    def values(self) -> list: return self.__values
+
+    @property
+    def children(self) -> list: return self.__children
+
+    @property
+    def parent(self) -> 'Record': return self.__parent
+
+    def set_parent(self, node: 'Record') -> None:
+        """Sets the parent of the current record to the record given."""
+        self.__parent = node
+        return None
+
+    def add_child(self, child: 'Record') -> None:
+        """Adds a child record to the current record."""
+        self.__children.append(child)
+        child.set_parent(self)
+        return None
+
+    def validate(self, row: list) -> bool:
         """
-        Adds a subrecord to the class
+        Validates the provided row using the individual 
+        field validations, the length of the row and the record id.
 
-        Args:
-            record (Record): The record to append
+        If validation passes, then no exceptions are raised.
         """
-        #assert issubclass(record, Record)
-        self.subrecords.append(record)
+        # check number of values
+        if len(row) != len(self):
+            raise IncorrectLengthError()
 
-    def read(self, data):
+        # check individual validations
+        for k, v in zip(self.fields, row):
+            if not k.validate(v):
+                raise InvalidFieldError()
+
+        # check first record matches
+        if self.id != int(row[0]):
+            raise IncorrectRecordIDError()
+
+        return None
+
+    def load(self, row: list) -> None:
         """
-        Reads the line and checks if the data matches the requirements
-        for the record.
+        Loads the row (list) into the Record. 
 
-        Args:
-            line (str): The line to read.
-        Kwargs:
-            delimiter (str): The delimiter to split the line with.
-        Returns:
-            dict. The 'checked' data::
-                AttributeName: Data
+        Before loading, the field is validated.
         """
-        assert isinstance(data, list)
-        self.__record_data = self.check(data)
-        map(lambda item: setattr(self, *item),
-            self.__record_data.items())
+        self.validate(row)
 
-    def check(self, data):
-        """
-        Checks if the data matches the requirements for the record.
+        self.__values = row
 
-        Returns:
-             dict. The `loaded` data::
-                AttributeName: Data
-        """
-        transformed_data = {}
-        # check if length of data matches expectation
-        if len(data) < len(self):
-            raise NotEnoughValuesError("Got %d, expected %d" % (len(data), len(self)))
-        if len(data) > len(self):
-            raise TooManyValuesError("Got %d, expected %d" % (len(data), len(self)))
-        if int(data[0]) != self.record_id:
-            raise RecordError("Wrong record identifier, expected %s" % self.record_id)
-        # check if field requirements matches each field
-        for i in range(len(data)):
-            attribute_name = self.__attr_spec[i][0]
-            # TODO: implement requirement checking
-            #attribute_requirement = self.__attr_spec[i][1]
+        for k, v in zip(self.fields, self.__values):
+            if v:
+                self[str(k)] = k.type()(v)
 
-            #if attribute_requirement == MANDATORY and data[i] == "":
-                #raise IncorrectValueError()
+        return None
 
-            transformed_data[attribute_name] = data[i]
-        return transformed_data
 
 class RecordError(Exception):
     "Raised when there is a row error."
 
-class TooManyValuesError(RecordError):
-    "Raised when there is too many values in record"
 
-class NotEnoughValuesError(RecordError):
-    "Raised when there is not enough values in record"
+class IncorrectLengthError(RecordError):
+    "Raised when a value is incorrect/"
 
-class IncorrectValueError(RecordError):
-    "Raised when a value is incorrect"
+
+class InvalidFieldError(RecordError):
+    """Raised when a field is invalid."""
+
+
+class IncorrectRecordIDError(RecordError):
+    """Raised when a field is invalid."""
