@@ -2,7 +2,6 @@
 # import statements
 from .record import Record, REQUIRED
 
-__author__ = "Cohen Robinson"
 ATTRIBUTES = {}
 
 ELEC_DEM_SUM_ID = 600

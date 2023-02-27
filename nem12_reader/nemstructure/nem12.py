@@ -1,54 +1,84 @@
 """NMI data details record for nem-reader-imported"""
 # import statements
-from .record import Record, MANDATORY, REQUIRED, NOTREQUIRED
+from .record import Record, NEMField, MANDATORY, REQUIRED, NOTREQUIRED
+from datetime import datetime
 ATTRIBUTES = {}
 MINUTES_DAILY = 24 * 60
 
+
+def date(x): return datetime.strptime(x, "%Y%m%d") if x else None
+def date_time(x): return datetime.strptime(x, "%Y%m%d%H%M%S")
+
+
+HEADER_RECORD_ID = 100
+ATTRIBUTES[HEADER_RECORD_ID] = [
+    NEMField("RecordIndicator", int, 3, MANDATORY),
+    NEMField("VersionHeader", str, 5, MANDATORY),
+    NEMField("DateTime", date_time, 12, MANDATORY),
+    NEMField("FromParticipant", str, 10, MANDATORY),
+    NEMField("ToParticipant", str, 10, MANDATORY)]
+
 NMI_RECORD_ID = 200
+INTERVAL_LENGTHS = [30, 15, 10, 5, 1]
 ATTRIBUTES[NMI_RECORD_ID] = [
-    ("RecordIndicator", MANDATORY),
-    ("NMI", MANDATORY),
-    ("NMIConfiguration", MANDATORY),
-    ("RegisterID", NOTREQUIRED),
-    ("NMISuffix", MANDATORY),
-    ("MDMDataStreamIdentifier", MANDATORY),
-    ("MeterSerialNumber", NOTREQUIRED),
-    ("UOM", MANDATORY),
-    ("IntervalLength", MANDATORY),
-    ("NextScheduledReadDate", NOTREQUIRED)
+    NEMField("RecordIndicator", int, 3, MANDATORY),
+    NEMField("NMI", str, 10, MANDATORY),
+    NEMField("NMIConfiguration", str, 250, MANDATORY),
+    NEMField("RegisterID", str, 10, NOTREQUIRED),
+    NEMField("NMISuffix", str, 2, MANDATORY),
+    NEMField("MDMDataStreamIdentifier", str, 2, MANDATORY),
+    NEMField("MeterSerialNumber", str, 12, NOTREQUIRED),
+    NEMField("UOM", str, 5, MANDATORY),
+    NEMField("IntervalLength", int, 2, MANDATORY),
+    NEMField("NextScheduledReadDate", date, 8, NOTREQUIRED)
 ]
 
 INTERVAL_RECORD_ID = 300
-INTERVAL_LENGTHS = ["30", "15", "5"]
-ATTRIBUTES[INTERVAL_RECORD_ID] = [
-    ("RecordIndicator", MANDATORY),
-    ("IntervalDate", MANDATORY),
-    ("IntervalValues", MANDATORY),
-    ("QualityMethod", MANDATORY),
-    ("ReasonCode", NOTREQUIRED),
-    ("ReasonDescription", NOTREQUIRED),
-    ("UpdateDateTime", NOTREQUIRED),
-    ("MSATSLoadDateTime", REQUIRED)
+ATTRIBUTES[INTERVAL_RECORD_ID] = [[
+    NEMField("RecordIndicator", int, 3, MANDATORY),
+    NEMField("IntervalDate", date, 8, MANDATORY)], 
+    lambda x: [
+    NEMField("IntervalValue%d" % i, float, 100, MANDATORY) 
+    for i in range(1, x)], [
+    NEMField("QualityMethod", str, 3, MANDATORY),
+    NEMField("ReasonCode", int, 3, NOTREQUIRED),
+    NEMField("ReasonDescription", str, 240, NOTREQUIRED),
+    NEMField("UpdateDateTime", date_time, 14, NOTREQUIRED),
+    NEMField("MSATSLoadDateTime", date_time, 14, REQUIRED)]
 ]
 
 EVENT_RECORD_ID = 400
 ATTRIBUTES[EVENT_RECORD_ID] = [
-    ("RecordIndicator", MANDATORY),
-    ("StartInterval", MANDATORY),
-    ("EndInterval", MANDATORY),
-    ("QualityMethod", MANDATORY),
-    ("ReasonCode", NOTREQUIRED),
-    ("ReasonDescription", NOTREQUIRED)
+    NEMField("RecordIndicator", int, 3, MANDATORY),
+    NEMField("StartInterval", int, 4, MANDATORY),
+    NEMField("EndInterval", int, 4, MANDATORY),
+    NEMField("QualityMethod", str, 3, MANDATORY),
+    NEMField("ReasonCode", int, 3, NOTREQUIRED),
+    NEMField("ReasonDescription", str, 240, NOTREQUIRED)
 ]
 
 B2B_RECORD_ID = 500
 ATTRIBUTES[B2B_RECORD_ID] = [
-    ("RecordIndicator", MANDATORY),
-    ("TransCode", MANDATORY),
-    ("RetServiceOrder", REQUIRED),
-    ("ReadDateTime", NOTREQUIRED),
-    ("IndexRead", NOTREQUIRED)
+    NEMField("RecordIndicator", int, 3, MANDATORY),
+    NEMField("TransCode", str, 1, MANDATORY),
+    NEMField("RetServiceOrder", str, 15, REQUIRED),
+    NEMField("ReadDateTime", date_time, 14, NOTREQUIRED),
+    NEMField("IndexRead", str, 15, NOTREQUIRED)
 ]
+
+END_RECORD_ID = 900
+ATTRIBUTES[END_RECORD_ID] = [
+    NEMField("RecordIndicator", int, 3, MANDATORY),]
+
+
+class Header(Record):
+    """
+    Represents a header 
+    in the NEM-12 file.
+    """
+    RECORD_ID = HEADER_RECORD_ID
+    FIELDS = ATTRIBUTES[HEADER_RECORD_ID]
+    pass
 
 class NMIData(Record):
     """
@@ -56,8 +86,8 @@ class NMIData(Record):
     in the NEM-12 file.
     """
     RECORD_ID = NMI_RECORD_ID
-    def __init__(self):
-        super().__init__(NMI_RECORD_ID, ATTRIBUTES[NMI_RECORD_ID])
+    FIELDS = ATTRIBUTES[NMI_RECORD_ID]
+    pass
 
 class IntervalData(Record):
     """
@@ -65,12 +95,19 @@ class IntervalData(Record):
     in the NEM-12 file
     """
     RECORD_ID = INTERVAL_RECORD_ID
+    FIELDS = None
+
     def __init__(self, interval_type):
-        self.intervals = [("IntervalValue%d" % i, MANDATORY)
-                     for i in range(1, MINUTES_DAILY // int(interval_type) + 1)]
-        attributes = ATTRIBUTES[INTERVAL_RECORD_ID][:2] + \
-            self.intervals + ATTRIBUTES[INTERVAL_RECORD_ID][3:]
-        super().__init__(INTERVAL_RECORD_ID, attributes)
+        ints = MINUTES_DAILY // int(interval_type) + 1
+        self.intervals = ATTRIBUTES[INTERVAL_RECORD_ID][1](ints)
+        attributes = ATTRIBUTES[INTERVAL_RECORD_ID][0] + \
+            self.intervals + ATTRIBUTES[INTERVAL_RECORD_ID][2]
+
+        self.FIELDS = attributes
+        super().__init__()
+    
+    pass
+
 
 class IntervalEvent(Record):
     """
@@ -78,8 +115,9 @@ class IntervalEvent(Record):
     in the NEM-12 file
     """
     RECORD_ID = EVENT_RECORD_ID
-    def __init__(self):
-        super().__init__(EVENT_RECORD_ID, ATTRIBUTES[EVENT_RECORD_ID])
+    FIELDS = ATTRIBUTES[EVENT_RECORD_ID]
+    pass
+
 
 class B2BDetails(Record):
     """
@@ -87,5 +125,24 @@ class B2BDetails(Record):
     in the NEM-12 file
     """
     RECORD_ID = B2B_RECORD_ID
-    def __init__(self):
-        super().__init__(B2B_RECORD_ID, ATTRIBUTES[B2B_RECORD_ID])
+    FIELDS = ATTRIBUTES[B2B_RECORD_ID]
+    pass
+
+
+class EndRecord(Record):
+    """
+    Represents an end record in
+    the NEM-12 file.
+    """
+    RECORD_ID = END_RECORD_ID
+    FIELDS = ATTRIBUTES[END_RECORD_ID]
+
+
+RECORDS = {
+    HEADER_RECORD_ID: Header, 
+    NMI_RECORD_ID: NMIData, 
+    INTERVAL_RECORD_ID: IntervalData,
+    EVENT_RECORD_ID: IntervalEvent, 
+    B2B_RECORD_ID: B2BDetails, 
+    END_RECORD_ID: EndRecord
+}
