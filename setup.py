@@ -4,7 +4,7 @@ setup(
     author='UTILIFIED HOLDINGS PTY LTD',
     description='nem12-reader is a package that supports the reading, processing and extraction of NEM-12, NEM-13 and other AEMO-market formats.',
     name='nem12-reader',
-    version='1.0.0',
+    version='1.0.1',
     packages=find_packages(include=[
         'nem12_reader',
         'nem12_reader.*'
