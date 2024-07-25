@@ -3,6 +3,6 @@ venv
 # ignore visualcode files
 .vscode
 # ignore test directory
-test/*
+test
 
 __pycache__
