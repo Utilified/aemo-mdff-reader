@@ -26,7 +26,7 @@ ATTRIBUTES[NMI_RECORD_ID] = [
     NEMField("NMIConfiguration", str, 250, MANDATORY),
     NEMField("RegisterID", str, 10, NOTREQUIRED),
     NEMField("NMISuffix", str, 2, MANDATORY),
-    NEMField("MDMDataStreamIdentifier", str, 2, MANDATORY),
+    NEMField("MDMDataStreamIdentifier", str, 2, NOTREQUIRED),
     NEMField("MeterSerialNumber", str, 12, NOTREQUIRED),
     NEMField("UOM", str, 5, MANDATORY),
     NEMField("IntervalLength", int, 2, MANDATORY),
