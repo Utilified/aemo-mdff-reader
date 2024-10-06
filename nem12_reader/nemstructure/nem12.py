@@ -6,7 +6,7 @@ ATTRIBUTES = {}
 MINUTES_DAILY = 24 * 60
 
 
-def date(x): return datetime.strptime(x, "%Y%m%d") if x else None
+def date(x): return datetime.strptime(x.replace('-', ''), "%Y%m%d") if x else None
 def date_time(x): return datetime.strptime(x, "%Y%m%d%H%M%S")
 
 
@@ -14,9 +14,9 @@ HEADER_RECORD_ID = 100
 ATTRIBUTES[HEADER_RECORD_ID] = [
     NEMField("RecordIndicator", int, 3, MANDATORY),
     NEMField("VersionHeader", str, 5, MANDATORY),
-    NEMField("DateTime", date_time, 12, MANDATORY),
-    NEMField("FromParticipant", str, 10, MANDATORY),
-    NEMField("ToParticipant", str, 10, MANDATORY)]
+    NEMField("DateTime", date_time, 14, MANDATORY),
+    NEMField("FromParticipant", str, 10, NOTREQUIRED),
+    NEMField("ToParticipant", str, 10, NOTREQUIRED)]
 
 NMI_RECORD_ID = 200
 INTERVAL_LENGTHS = [30, 15, 10, 5, 1]
@@ -30,7 +30,7 @@ ATTRIBUTES[NMI_RECORD_ID] = [
     NEMField("MeterSerialNumber", str, 12, NOTREQUIRED),
     NEMField("UOM", str, 5, MANDATORY),
     NEMField("IntervalLength", int, 2, MANDATORY),
-    NEMField("NextScheduledReadDate", date, 8, NOTREQUIRED)
+    NEMField("NextScheduledReadDate", date, 10, NOTREQUIRED)
 ]
 
 INTERVAL_RECORD_ID = 300

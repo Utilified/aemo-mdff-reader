@@ -1,6 +1,6 @@
 from nem12_reader import NEMReader
 
-FILENAME = 'test/ba817cc5-7835-4da5-bbec-1cbe71e1afb0.csv'
+FILENAME = 'test/usageextract_meter_read_elec_nem12_19234_2024-10-06T103313Z.csv'
 
 def test():
 
