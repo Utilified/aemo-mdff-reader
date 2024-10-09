@@ -1,6 +1,7 @@
 from nem12_reader import NEMReader
-
-FILENAME = 'test/usageextract_meter_read_elec_nem12_19234_2024-10-06T103313Z.csv'
+from nem12_reader.nemstructure.nem12 import date
+from datetime import datetime as dt
+FILENAME = 'test/usageextract_meter_read_elec_nem12_19339_2024-10-09T094550Z.csv'
 
 def test():
 

@@ -5,9 +5,33 @@ from datetime import datetime
 ATTRIBUTES = {}
 MINUTES_DAILY = 24 * 60
 
+def date(date_string):
+    # List of possible formats
+    formats = ['%Y%m%d%H%M%S', '%Y%m%d', '%Y-%m-%d']
+    
+    # Try each format until one works
+    for fmt in formats:
+        try:
+            return datetime.strptime(date_string, fmt)
+        except ValueError:
+            continue
+    
+    # If none of the formats match, raise an error or return None
+    raise ValueError(f"No valid date format found for {date_string}")
 
-def date(x): return datetime.strptime(x.replace('-', ''), "%Y%m%d") if x else None
-def date_time(x): return datetime.strptime(x, "%Y%m%d%H%M%S")
+def date_time(date_string):
+    # List of possible formats
+    formats = ['%Y%m%d%H%M%S', '%Y%m%d', '%Y-%m-%d']
+    
+    # Try each format until one works
+    for fmt in formats:
+        try:
+            return datetime.strptime(date_string, fmt)
+        except ValueError:
+            continue
+    
+    # If none of the formats match, raise an error or return None
+    raise ValueError(f"No valid date format found for {date_string}")
 
 
 HEADER_RECORD_ID = 100
