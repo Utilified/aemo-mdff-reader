@@ -76,7 +76,7 @@ ATTRIBUTES[EVENT_RECORD_ID] = [
     NEMField("RecordIndicator", int, 3, MANDATORY),
     NEMField("StartInterval", int, 4, MANDATORY),
     NEMField("EndInterval", int, 4, MANDATORY),
-    NEMField("QualityMethod", str, 3, MANDATORY),
+    NEMField("QualityMethod", str, 3, NOTREQUIRED),
     NEMField("ReasonCode", int, 3, NOTREQUIRED),
     NEMField("ReasonDescription", str, 240, NOTREQUIRED)
 ]
