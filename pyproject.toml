@@ -16,10 +16,10 @@ description = "Fast streaming reader for AEMO MDFF NEM12 / NEM13 metering files.
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-# Python 3.9 reached end-of-life in October 2025; CI hash-pinning of
-# pandas/pyarrow/numpy no longer resolves cleanly against 3.9 wheels.
-# 3.10 is the lowest supported runtime as of v3.0.
-requires-python = ">=3.10"
+# Python 3.9 reached EOL in October 2025; pandas 3.0 dropped Python
+# 3.10 support. Bumping the floor to 3.11 keeps us aligned with the
+# upstream pandas/numpy/pyarrow release trains used by the dev extras.
+requires-python = ">=3.11"
 authors = [
     { name = "Utilified Holdings Pty Ltd" },
 ]
@@ -31,7 +31,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -43,13 +42,13 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-pandas = ["pandas>=1.3"]
-parquet = ["pandas>=1.3", "pyarrow>=10"]
+pandas = ["pandas>=2"]
+parquet = ["pandas>=2", "pyarrow>=10"]
 mysql = ["PyMySQL>=1.0"]
 dev = [
     "pytest>=7",
     "pytest-cov>=4",
-    "pandas>=1.3",
+    "pandas>=2",
     "pyarrow>=10",
     "mypy>=1.8",
     "ruff>=0.5",
@@ -95,7 +94,7 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
@@ -109,10 +108,8 @@ select = [
 ]
 ignore = [
     "E501",   # line too long — handled by formatter
-    # We use ``Union[...]`` / ``Optional[...]`` / ``Dict[...]`` so the
-    # type aliases work at runtime on 3.9 without ``from __future__
-    # import annotations`` everywhere. Adopting PEP 604 / PEP 585 syntax
-    # is a follow-up; left as-is to keep the public-API diff small.
+    # PEP 604 / PEP 585 typing migration is a follow-up; left for now
+    # to keep the public-API surface diff small for 2.x.
     "UP007",  # Use X | Y instead of Union[X, Y]
     "UP045",  # Use X | None instead of Optional[X]
     "UP006",  # Use builtin generics (dict[X, Y]) instead of typing.Dict
@@ -128,7 +125,7 @@ ignore = [
 "aemo_mdff_reader/sql/*" = ["F401", "F403", "F405", "UP031"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 strict = true
 files = ["aemo_mdff_reader"]
 # Optional dependencies that don't ship type stubs.
