@@ -24,6 +24,28 @@ pip install -e .[dev]
 pytest
 ```
 
+## CI requirements files
+
+`requirements/{dev,lint,build,audit}.txt` are hash-pinned lock files
+consumed by CI (`pip install --require-hashes`). They satisfy
+Scorecard's `PinnedDependenciesID` and protect CI against a compromised
+PyPI mirror. Dependabot refreshes them weekly.
+
+Source `.in` files are committed alongside the locks in `requirements/`.
+To regenerate manually after editing them or `pyproject.toml`:
+
+```bash
+pip install pip-tools
+pip-compile --quiet --generate-hashes --strip-extras --extra=dev   --output-file=requirements/dev.txt   pyproject.toml
+pip-compile --quiet --generate-hashes --strip-extras               --output-file=requirements/lint.txt  requirements/lint.in
+pip-compile --quiet --generate-hashes --strip-extras               --output-file=requirements/build.txt requirements/build.in
+pip-compile --quiet --generate-hashes --strip-extras --allow-unsafe --output-file=requirements/audit.txt requirements/audit.in
+```
+
+Note: `dev.txt` is generated against the highest supported Python (3.12);
+hashes for older interpreters in the matrix are also fetched because
+pip-compile records every wheel hash matching each pinned version.
+
 ## Running the test suite
 
 ```bash

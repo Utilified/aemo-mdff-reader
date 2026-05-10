@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
         os: [ubuntu-latest]
         include:
           - python-version: "3.12"
@@ -28,16 +28,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - name: Install
+      - name: Install dev deps (hash-pinned) and the package itself (editable)
+        # ``--require-hashes`` satisfies Scorecard's PinnedDependenciesID
+        # check and protects CI against a compromised PyPI mirror. See
+        # ``requirements/`` and ``CONTRIBUTING.md`` for how to refresh
+        # the lock files.
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          pip install --require-hashes --no-deps -r requirements/dev.txt
+          pip install --no-deps -e .
       - name: Test
         run: pytest -v --cov=aemo_mdff_reader --cov-report=term-missing --cov-report=xml
       - name: Wheel install + import smoke
         if: matrix.python-version == '3.12' && runner.os == 'Linux'
         run: |
-          python -m pip install --upgrade pip build
+          pip install --require-hashes --no-deps -r requirements/build.txt
           python -m build --wheel
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install dist/*.whl
@@ -53,9 +57,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: |
-          python -m pip install --upgrade pip
-          pip install ruff
+      - run: pip install --require-hashes --no-deps -r requirements/lint.txt
       - run: ruff check .
       - run: ruff format --check .
 
@@ -69,8 +71,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          pip install --require-hashes --no-deps -r requirements/dev.txt
+          pip install --no-deps -e .
       - run: mypy
 
   security:
@@ -82,12 +84,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: |
-          # Pre-upgrade build tooling so we audit the latest CVE-clean
-          # baseline (otherwise we may flag CVEs in setup-python's bundled
-          # pip / setuptools rather than anything we introduced).
-          python -m pip install --upgrade pip setuptools wheel
-          pip install pip-audit bandit
+      - run: pip install --require-hashes --no-deps -r requirements/audit.txt
       - name: Audit our declared dependencies for known CVEs
         # We have no required runtime deps; this audits dev extras + tooling.
         run: pip-audit --skip-editable
@@ -105,7 +102,7 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
-      - run: python -m pip install --upgrade pip build twine
+      - run: pip install --require-hashes --no-deps -r requirements/build.txt
       - run: python -m build
       - run: twine check --strict dist/*
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

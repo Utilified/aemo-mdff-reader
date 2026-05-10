@@ -1,0 +1,4 @@
+pip-audit
+bandit
+setuptools
+wheel

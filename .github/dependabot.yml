@@ -37,3 +37,14 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  # Hash-pinned CI requirements (dev/lint/build/audit) — Dependabot keeps
+  # the wheel hashes fresh so we don't have to re-run pip-compile by hand.
+  - package-ecosystem: "pip"
+    directory: "/requirements"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      ci-requirements:
+        patterns:
+          - "*"

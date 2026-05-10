@@ -20,14 +20,18 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Default token permissions are read-only. Each job opts into the
+# narrower writes it actually needs (Scorecard TokenPermissionsID).
 permissions:
-  contents: write
-  pull-requests: write
-  actions: write   # to dispatch release.yml after a release is created
+  contents: read
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write          # release-please pushes the release commit + tag
+      pull-requests: write     # release-please opens the release PR
+      actions: write           # to dispatch release.yml after a release is created
     steps:
       - id: release
         uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v5.0.0
