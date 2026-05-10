@@ -4,6 +4,17 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [2.2.0](https://github.com/Utilified/aemo-mdff-reader/compare/v2.1.0...v2.2.0) (2026-05-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* minimum Python version is now 3.11. Users on 3.10 should pin to `aemo-mdff-reader<2.2`.
+
+### Features
+
+* drop Python 3.10, bump dev floor to pandas 3 / numpy 2.x ([876c863](https://github.com/Utilified/aemo-mdff-reader/commit/876c863186a7de14b05fa35b0a864b38e4292701))
+
 ## [2.1.0](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.4...v2.1.0) (2026-05-10)
 
 
