@@ -61,7 +61,11 @@ jobs:
             dist/*.whl
             dist/*.tar.gz
       # SBOM is written outside dist/ so the publish job's PyPI upload
-      # (which only accepts .whl/.tar.gz) is not contaminated.
+      # (which only accepts .whl/.tar.gz) is not contaminated. anchore's
+      # sbom-action does not auto-create the parent directory of
+      # output-file, so we mkdir first.
+      - name: Prepare sbom/ directory
+        run: mkdir -p sbom
       - name: Generate SBOM (CycloneDX)
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
