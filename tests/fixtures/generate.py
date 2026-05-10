@@ -66,6 +66,8 @@ def generate(
 
 
 def main() -> int:
+    import sys
+
     p = argparse.ArgumentParser()
     p.add_argument("out", nargs="?", default="-")
     p.add_argument("--nmis", type=int, default=4)
@@ -74,24 +76,28 @@ def main() -> int:
     p.add_argument("--seed", type=int, default=0)
     args = p.parse_args()
     if args.out == "-":
-        import sys
-
-        return generate(
+        rows = generate(
             sys.stdout,
             nmis=args.nmis,
             days=args.days,
             interval_minutes=args.interval_minutes,
             seed=args.seed,
         )
-    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, "w", newline="") as f:
-        return generate(
-            f,
-            nmis=args.nmis,
-            days=args.days,
-            interval_minutes=args.interval_minutes,
-            seed=args.seed,
-        )
+    else:
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        with open(args.out, "w", newline="") as f:
+            rows = generate(
+                f,
+                nmis=args.nmis,
+                days=args.days,
+                interval_minutes=args.interval_minutes,
+                seed=args.seed,
+            )
+    # Print row count to stderr so the script's exit code is a clean
+    # 0/non-zero (was previously the row count, which Python truncates
+    # mod 256 inside SystemExit).
+    print(f"wrote {rows} rows", file=sys.stderr)
+    return 0
 
 
 if __name__ == "__main__":

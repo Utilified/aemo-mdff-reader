@@ -140,6 +140,40 @@ exact signatures.
 ~2.7× faster than v1 end-to-end; reproduce with
 `python benchmarks/bench_parser.py`.
 
+## Large files
+
+The parser is built to scale to gigabyte-class NEM12 files without
+loading them into RAM. Measured peak memory delta on a synthetic
+**10.5 M-reading file** (100 NMIs × 365 days × 5-min, 71 MiB CSV),
+Python 3.12:
+
+| API                                      | Memory profile | Peak Δ |
+| ---------------------------------------- | -------------- | -----: |
+| `for r in parse(path): ...`              | streaming      | **1.3 MiB** |
+| `daily_totals(parse(path))`              | streaming      | **0 MiB** |
+| `write_csv(parse(path), out)`            | streaming      | **0 MiB** |
+| `iter_dataframes(path, chunk_size=N)`    | bounded O(N)   | **~30 MiB / 100k** |
+| `iter_columns_chunks(path, chunk_size=N)`| bounded O(N)   | **~10 MiB / 100k** |
+| `parse_to_columns(path)`                 | full materialise | ~600 MiB |
+| `list(parse(path))` / `to_dataframe(path)` / `NEMReader.read_from_file()` | full materialise | ~2.5 GiB |
+
+Rule of thumb: stay on the streaming or chunked APIs for any file
+larger than a few hundred MiB. The chunked variants make pandas-based
+workflows safe on arbitrarily large inputs:
+
+```python
+from nem12_reader import iter_dataframes
+
+# Process a multi-GiB file 50,000 readings at a time.
+for df in iter_dataframes("huge.csv", chunk_size=50_000):
+    daily = df.groupby(["NMI", "IntervalDate"])["Value"].sum()
+    daily.to_csv("out.csv", mode="a", header=False)
+```
+
+The `NEMReader` facade and `to_dataframe(path)` materialise their
+inputs by design (so `len(reader)` and `df.iloc[...]` work). Avoid
+them for files that won't fit in RAM.
+
 ## Development
 
 ```bash

@@ -19,6 +19,8 @@ from __future__ import annotations
 from . import aggregate, spec
 from .parser import (
     NEM12ParseError,
+    iter_columns_chunks,
+    iter_dataframes,
     nmi_checksum,
     parse,
     parse_accumulations,
@@ -60,6 +62,8 @@ __all__ = [
     "NMIDetails",
     "__version__",
     "aggregate",
+    "iter_columns_chunks",
+    "iter_dataframes",
     "nmi_checksum",
     "parse",
     "parse_accumulations",

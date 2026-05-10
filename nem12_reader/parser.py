@@ -518,6 +518,11 @@ def to_dataframe(source: Union[RowSource, Iterable[IntervalReading]]) -> Any:
     objects. When given a path/file, takes the columnar fast-path for
     a 2–4× speedup over iterating through Python row objects.
 
+    .. note::
+       This materialises every reading. For files larger than a few
+       hundred MiB use :func:`iter_dataframes` instead — it yields
+       fixed-size DataFrame chunks and stays bounded in memory.
+
     Requires ``pandas`` (``pip install nem12-reader[pandas]``).
     """
     try:
@@ -533,6 +538,68 @@ def to_dataframe(source: Union[RowSource, Iterable[IntervalReading]]) -> Any:
         return pd.DataFrame(parse_to_columns(source))  # type: ignore[arg-type]
     # Iterable of IntervalReading — use the row-by-row builder.
     return pd.DataFrame(to_columns(source))  # type: ignore[arg-type]
+
+
+def iter_dataframes(
+    source: Union[RowSource, Iterable[IntervalReading]],
+    chunk_size: int = 100_000,
+) -> Iterator[Any]:
+    """Yield pandas DataFrames in chunks of ``chunk_size`` interval readings.
+
+    Memory cost is O(chunk_size), independent of the source file size
+    — letting a single workflow process arbitrarily large NEM12 files
+    without OOM. ``chunk_size`` defaults to 100,000 readings, which is
+    roughly 30–60 MiB of DataFrame depending on string fields.
+
+    >>> import pandas as pd
+    >>> from nem12_reader import iter_dataframes
+    >>> for df in iter_dataframes("huge.csv", chunk_size=50_000):
+    ...     df.groupby("NMI")["Value"].sum().to_csv("partial.csv", mode="a")
+
+    For columnar processing without pandas, see
+    :func:`iter_columns_chunks`.
+    """
+    try:
+        import pandas as pd
+    except ImportError as exc:  # pragma: no cover
+        raise ImportError(
+            "iter_dataframes requires pandas. Install it with "
+            "'pip install nem12-reader[pandas]' or 'pip install pandas'."
+        ) from exc
+
+    # Always go through the row-by-row generator so the function
+    # accepts both a source (path/file/iterable of rows) and an
+    # iterable of pre-built IntervalReading objects.
+    if isinstance(source, (str, os.PathLike)) or hasattr(source, "read"):
+        readings: Iterable[IntervalReading] = parse(source)  # type: ignore[arg-type]
+    else:
+        readings = source  # type: ignore[assignment]
+
+    from .aggregate import iter_chunks  # local import to avoid cycle
+
+    for batch in iter_chunks(readings, chunk_size):
+        yield pd.DataFrame(to_columns(batch))
+
+
+def iter_columns_chunks(
+    source: Union[RowSource, Iterable[IntervalReading]],
+    chunk_size: int = 100_000,
+) -> Iterator[Columns]:
+    """Yield :data:`Columns` dicts in chunks of ``chunk_size`` rows.
+
+    Pandas-free counterpart to :func:`iter_dataframes`. Memory bound to
+    O(chunk_size). Useful for chunked parquet writes via pyarrow, or
+    feeding a database in batches with the ``executemany`` API.
+    """
+    if isinstance(source, (str, os.PathLike)) or hasattr(source, "read"):
+        readings: Iterable[IntervalReading] = parse(source)  # type: ignore[arg-type]
+    else:
+        readings = source  # type: ignore[assignment]
+
+    from .aggregate import iter_chunks  # local import to avoid cycle
+
+    for batch in iter_chunks(readings, chunk_size):
+        yield to_columns(batch)
 
 
 def write_csv(readings: Iterable[IntervalReading], output: Union[PathLike, IO[str]]) -> int:
@@ -1096,6 +1163,8 @@ def validate_file(source: RowSource) -> List[str]:
 __all__ = [
     "ACCUMULATION_FIELDS",
     "NEM12ParseError",
+    "iter_columns_chunks",
+    "iter_dataframes",
     "nmi_checksum",
     "parse",
     "parse_accumulations",

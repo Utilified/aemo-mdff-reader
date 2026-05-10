@@ -16,9 +16,37 @@ from __future__ import annotations
 
 import itertools
 from datetime import datetime
-from typing import Iterable, Iterator, NamedTuple, Optional, Tuple
+from typing import Iterable, Iterator, List, NamedTuple, Optional, Tuple, TypeVar
 
 from .types import IntervalReading
+
+_T = TypeVar("_T")
+
+
+def iter_chunks(items: Iterable[_T], size: int) -> Iterator[List[_T]]:
+    """Yield successive lists of ``size`` items from ``items``.
+
+    Useful for batching streaming reads when the downstream consumer
+    works in fixed-size lots — DB ``executemany`` / batch HTTP / etc. —
+    without materialising the whole stream in memory. Memory cost is
+    O(size), not O(file).
+
+    The final batch may be shorter than ``size`` if the input is not a
+    multiple of it. Empty input yields no batches.
+
+    >>> from nem12_reader import parse
+    >>> from nem12_reader.aggregate import iter_chunks
+    >>> for batch in iter_chunks(parse("metering.csv"), 5_000):
+    ...     db.executemany(INSERT_SQL, [r.to_dict() for r in batch])
+    """
+    if size <= 0:
+        raise ValueError(f"chunk size must be positive, got {size}")
+    it = iter(items)
+    while True:
+        chunk = list(itertools.islice(it, size))
+        if not chunk:
+            return
+        yield chunk
 
 
 class ChannelKey(NamedTuple):
@@ -136,4 +164,5 @@ __all__ = [
     "DailyTotal",
     "daily_totals",
     "group_by_nmi",
+    "iter_chunks",
 ]

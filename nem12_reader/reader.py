@@ -60,7 +60,14 @@ class NEMReader:
         self._readings = list(parse(array))
 
     def read_from_file(self, filename: str) -> None:
-        """Reads a NEM12 CSV file from disk."""
+        """Read a NEM12 CSV file from disk and buffer every interval.
+
+        Memory note: this materialises the full reading list, so peak
+        usage scales with the file. For files larger than a few hundred
+        MiB use :func:`nem12_reader.parse` (streaming, O(1) memory) or
+        :func:`nem12_reader.iter_dataframes` (bounded, O(chunk_size))
+        instead.
+        """
         self._source_filename = filename
         self._readings = list(parse(filename))
 
