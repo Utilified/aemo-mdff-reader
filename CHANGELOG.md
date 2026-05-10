@@ -8,28 +8,30 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ### Highlights
 
-- **Renamed to `aemo-mdff-reader` (PyPI dist + GitHub repo).** v1
-  shipped as `nem12-reader` on both surfaces; v2 adopts the AEMO spec
-  name (MDFF — Meter Data File Format) so the project surfaces in
-  searches for both NEM12 (interval) and NEM13 (accumulation) data
-  and is unambiguously distinct from the unrelated `nem-reader`
-  package on PyPI. The Python import name remains `nem12_reader` and
-  the CLI remains `nem12-reader` — precedent:
-  `pip install Pillow` / `import PIL`. GitHub serves redirects from
-  the previous repo URL, so existing git pins
-  (`git@github.com:Utilified/nem12-reader.git`) continue to work.
+- **Renamed to `aemo-mdff-reader` end-to-end.** v1 shipped under
+  `nem12-reader` (GitHub repo, PyPI distribution, Python import, and
+  CLI command). v2 unifies all four surfaces under
+  `aemo-mdff-reader` / `aemo_mdff_reader` — the AEMO spec name (MDFF,
+  Meter Data File Format) covers both NEM12 (interval) and NEM13
+  (accumulation) data and disambiguates the project from the
+  unrelated `nem-reader` package on PyPI. GitHub redirects the
+  previous repo URL so existing git pins
+  (`git@github.com:Utilified/nem12-reader.git`) continue to resolve.
+  Source consumers must update their imports
+  (`from nem12_reader import …` → `from aemo_mdff_reader import …`)
+  and any references to the `nem12-reader` CLI command.
 - **Spec target: AEMO MDFF v2.6** (effective 29 September 2024).
   Previous v1.x of this package targeted MDFF v1.02 (2017). All
   record-type schemas, allowed values, and reason-code descriptions
   are aligned to v2.6 — including the v2.6 reason codes added by the
   ICF_054 substitution-type review (codes 100–109) and the v2.6
   designation of obsolete reason codes (Appendix F). The full set is
-  exposed as constants in the new `nem12_reader.spec` module.
+  exposed as constants in the new `aemo_mdff_reader.spec` module.
 - **Zero required dependencies**: pandas, PyMySQL, wrapt, six, tomli,
   pytz, python-dateutil are no longer required. pandas / PyMySQL are
   available as opt-in extras (`pip install aemo-mdff-reader[pandas]`,
   `[mysql]`).
-- **Streaming parser** (`nem12_reader.parse`): O(1) memory, works on
+- **Streaming parser** (`aemo_mdff_reader.parse`): O(1) memory, works on
   arbitrarily large files.
 - **Columnar fast path** (`parse_to_columns`, `to_dataframe(path)`):
   ~7× faster than the v1 `read_from_file` + `to_dataframe` flow.
@@ -39,36 +41,36 @@ project follows [Semantic Versioning](https://semver.org/).
 - **Full record-type coverage**: `parse_events()` (400 quality/event
   rows), `parse_b2b()` (500 NEM12 + 550 NEM13 transaction details).
 - **Spec-conformance utilities**: `nmi_checksum()`, `validate_nmi()`,
-  `validate_file()` plus a `nem12-reader --validate` CLI flag.
-- **CLI** (`nem12-reader`): convert NEM12 / NEM13 → flat CSV / parquet
+  `validate_file()` plus a `aemo-mdff-reader --validate` CLI flag.
+- **CLI** (`aemo-mdff-reader`): convert NEM12 / NEM13 → flat CSV / parquet
   from the command line. Was previously documented but not implemented.
   `--records intervals|accumulations` selects the record type;
   `--validate` runs structural checks against the AEMO MDFF spec.
 
 ### Added
 
-- `nem12_reader.parse(source)` — generator-based streaming parser
+- `aemo_mdff_reader.parse(source)` — generator-based streaming parser
   (NEM12 300 records).
-- `nem12_reader.parse_to_columns(source)` — single-pass columnar
+- `aemo_mdff_reader.parse_to_columns(source)` — single-pass columnar
   parse without per-cell row-object allocation.
-- `nem12_reader.parse_header(source)` — header-only fast read.
-- `nem12_reader.parse_accumulations(source)` — NEM13 250 record
+- `aemo_mdff_reader.parse_header(source)` — header-only fast read.
+- `aemo_mdff_reader.parse_accumulations(source)` — NEM13 250 record
   streaming parser.
-- `nem12_reader.parse_accumulations_to_columns(source)` — columnar
+- `aemo_mdff_reader.parse_accumulations_to_columns(source)` — columnar
   NEM13 fast path.
-- `nem12_reader.parse_all(source)` — unified iterator yielding both
+- `aemo_mdff_reader.parse_all(source)` — unified iterator yielding both
   300 and 250 records in file order.
-- `nem12_reader.to_dataframe(source)` and
+- `aemo_mdff_reader.to_dataframe(source)` and
   `to_accumulations_dataframe(source)` — pandas DataFrame builders.
-- `nem12_reader.write_csv(...)` and `write_accumulations_csv(...)` —
+- `aemo_mdff_reader.write_csv(...)` and `write_accumulations_csv(...)` —
   flat-CSV writers that work without pandas.
-- `nem12_reader.types` — slots-based `Header`, `NMIDetails`,
+- `aemo_mdff_reader.types` — slots-based `Header`, `NMIDetails`,
   `IntervalReading`, `IntervalEvent`, `AccumulationReading` classes.
-- `nem12_reader.cli.main` — `nem12-reader` console script with
+- `aemo_mdff_reader.cli.main` — `aemo-mdff-reader` console script with
   `--records intervals|accumulations` and `--format csv|parquet`.
 - `pyproject.toml` (PEP 621) with full metadata, classifiers, and
   optional extras (`pandas`, `parquet`, `mysql`, `dev`).
-- `mypy --strict` configuration; the public `nem12_reader` surface
+- `mypy --strict` configuration; the public `aemo_mdff_reader` surface
   is fully typed and passes `mypy --strict`.
 - `ruff` lint + format configuration.
 - `LICENSE` file (MIT).
@@ -90,16 +92,16 @@ project follows [Semantic Versioning](https://semver.org/).
 - `NEMReader().to_dataframe()` now uses the columnar fast path when
   the source filename is known. Output schema clarifies interval
   start/end timestamps and adds an explicit Suffix column.
-- `nem12_reader.sql` no longer eagerly imports `pymysql`; the
+- `aemo_mdff_reader.sql` no longer eagerly imports `pymysql`; the
   dependency is only loaded when `Storer` is instantiated.
 
 ### Removed
 
-- `nem12_reader.nemstructure` package (Header / NMIData / IntervalData
+- `aemo_mdff_reader.nemstructure` package (Header / NMIData / IntervalData
   abstractions and the dynamically-built `NEMField` schema). The new
-  `nem12_reader.types` module replaces this surface with simpler,
+  `aemo_mdff_reader.types` module replaces this surface with simpler,
   faster slots classes.
-- Broken `nem12_reader.nemstructure.nem13` and `enem12` modules,
+- Broken `aemo_mdff_reader.nemstructure.nem13` and `enem12` modules,
   which called `Record.__init__(...)` with arguments the base class
   never accepted.
 - Dead `requirements.txt` pins for `numpy`, `wrapt`, `six`, `tomli`,

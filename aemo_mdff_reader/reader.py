@@ -2,12 +2,12 @@
 
 The original :class:`NEMReader` class built an in-memory tree of records
 and walked it twice (once to build, once to flatten). The new
-implementation streams through :mod:`nem12_reader.parser` and only
+implementation streams through :mod:`aemo_mdff_reader.parser` and only
 materialises results when the user asks for them — typically to a
 DataFrame or CSV.
 
 The legacy method names are preserved so existing code continues to
-work; new code should prefer :func:`nem12_reader.parser.parse` directly.
+work; new code should prefer :func:`aemo_mdff_reader.parser.parse` directly.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ INTERVAL_DATA_OUTPUT_HEADERS = [
 class NEMReader:
     """Reads NEM12 / NEM13 files using the AEMO MDFF specification (v2.6).
 
-    See :mod:`nem12_reader.spec` for the spec version, effective date,
+    See :mod:`aemo_mdff_reader.spec` for the spec version, effective date,
     and the allowed-value enumerations referenced in the spec.
     """
 
@@ -64,8 +64,8 @@ class NEMReader:
 
         Memory note: this materialises the full reading list, so peak
         usage scales with the file. For files larger than a few hundred
-        MiB use :func:`nem12_reader.parse` (streaming, O(1) memory) or
-        :func:`nem12_reader.iter_dataframes` (bounded, O(chunk_size))
+        MiB use :func:`aemo_mdff_reader.parse` (streaming, O(1) memory) or
+        :func:`aemo_mdff_reader.iter_dataframes` (bounded, O(chunk_size))
         instead.
         """
         self._source_filename = filename

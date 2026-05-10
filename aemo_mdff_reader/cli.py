@@ -1,11 +1,11 @@
-"""Command-line interface for nem12-reader.
+"""Command-line interface for aemo-mdff-reader.
 
-Installed as the ``nem12-reader`` console script via the project's
+Installed as the ``aemo-mdff-reader`` console script via the project's
 ``[project.scripts]`` entry in ``pyproject.toml``.
 
 Usage::
 
-    nem12-reader INPUT [-o OUTPUT] [--records intervals|accumulations]
+    aemo-mdff-reader INPUT [-o OUTPUT] [--records intervals|accumulations]
                                    [--format csv|parquet]
                                    [--nmi NMI [--nmi NMI ...]]
                                    [--start YYYY-MM-DD] [--end YYYY-MM-DD]
@@ -44,7 +44,7 @@ def _iso_date(value: str) -> date:
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="nem12-reader",
+        prog="aemo-mdff-reader",
         description=(
             "Read an AEMO NEM12 / NEM13 file and emit a flat CSV. Streams in O(1) memory."
         ),
@@ -106,7 +106,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--version",
         action="version",
-        version=f"nem12-reader {__version__}",
+        version=f"aemo-mdff-reader {__version__}",
     )
     return p
 

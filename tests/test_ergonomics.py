@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from nem12_reader import (
+from aemo_mdff_reader import (
     AccumulationReading,
     B2BDetails,
     Header,
@@ -42,7 +42,7 @@ def test_interval_reading_to_dict_round_trips():
 
 
 def test_accumulation_reading_to_dict():
-    from nem12_reader import parse_accumulations
+    from aemo_mdff_reader import parse_accumulations
 
     r = next(iter(parse_accumulations(NEM13_FIXTURE)))
     d = r.to_dict()
@@ -52,7 +52,7 @@ def test_accumulation_reading_to_dict():
 
 
 def test_header_to_dict():
-    from nem12_reader import parse_header
+    from aemo_mdff_reader import parse_header
 
     h = parse_header(FIXTURE)
     assert h is not None
@@ -270,7 +270,7 @@ def test_nem_reader_iter_before_load_raises():
 
 
 def test_cli_nmi_filter_keeps_only_matching(tmp_path, capsys):
-    from nem12_reader.cli import main
+    from aemo_mdff_reader.cli import main
 
     out = tmp_path / "out.csv"
     rc = main([str(FIXTURE), "-o", str(out), "--nmi", "NMI1234567"])
@@ -283,7 +283,7 @@ def test_cli_nmi_filter_keeps_only_matching(tmp_path, capsys):
 
 
 def test_cli_nmi_filter_drops_non_matching(tmp_path):
-    from nem12_reader.cli import main
+    from aemo_mdff_reader.cli import main
 
     out = tmp_path / "out.csv"
     rc = main([str(FIXTURE), "-o", str(out), "--nmi", "DOES_NOT_EXIST"])
@@ -293,7 +293,7 @@ def test_cli_nmi_filter_drops_non_matching(tmp_path):
 
 
 def test_cli_start_end_dates(tmp_path):
-    from nem12_reader.cli import main
+    from aemo_mdff_reader.cli import main
 
     out = tmp_path / "out.csv"
     # The fixture covers 2024-01-01 and 2024-01-02. Restrict to day 2.
@@ -307,7 +307,7 @@ def test_cli_start_end_dates(tmp_path):
 
 
 def test_cli_invalid_date_argument():
-    from nem12_reader.cli import main
+    from aemo_mdff_reader.cli import main
 
     with pytest.raises(SystemExit):
         main([str(FIXTURE), "--start", "not-a-date"])

@@ -7,7 +7,7 @@ that yields :class:`IntervalReading` (300) and :class:`AccumulationReading`
 
 Spec target: AEMO Meter Data File Format Specification NEM12 & NEM13,
 v2.6, effective 29 September 2024. Allowed-value enumerations are
-exposed via :mod:`nem12_reader.spec`.
+exposed via :mod:`aemo_mdff_reader.spec`.
 """
 
 from __future__ import annotations
@@ -306,7 +306,7 @@ def _parse_nmi(row: Sequence[str]) -> NMIDetails:
     # IntervalLength: the spec restricts this to 5, 15, or 30 minutes. We
     # accept any divisor of 1440 for tolerance with non-conforming files;
     # callers wanting strict validation can compare against
-    # ``nem12_reader.spec.ALLOWED_INTERVAL_LENGTHS``.
+    # ``aemo_mdff_reader.spec.ALLOWED_INTERVAL_LENGTHS``.
     if len(row) < 9:
         raise NEM12ParseError("200 NMI row missing required fields")
     try:
@@ -609,7 +609,7 @@ def iter_dataframes(
     roughly 30–60 MiB of DataFrame depending on string fields.
 
     >>> import pandas as pd
-    >>> from nem12_reader import iter_dataframes
+    >>> from aemo_mdff_reader import iter_dataframes
     >>> for df in iter_dataframes("huge.csv", chunk_size=50_000):
     ...     df.groupby("NMI")["Value"].sum().to_csv("partial.csv", mode="a")
 

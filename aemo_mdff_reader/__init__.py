@@ -1,17 +1,17 @@
-"""nem12-reader — fast streaming reader for AEMO NEM12 / NEM13 files.
+"""aemo-mdff-reader — fast streaming reader for AEMO NEM12 / NEM13 files.
 
 Recommended entry points:
 
->>> from nem12_reader import parse                  # NEM12 300 records
->>> from nem12_reader import parse_accumulations    # NEM13 250 records
->>> from nem12_reader import parse_all              # both, in file order
+>>> from aemo_mdff_reader import parse                  # NEM12 300 records
+>>> from aemo_mdff_reader import parse_accumulations    # NEM13 250 records
+>>> from aemo_mdff_reader import parse_all              # both, in file order
 
 Each iterator is lazy (O(1) memory). For pandas DataFrames, see
 :func:`to_dataframe` (NEM12) and :func:`to_accumulations_dataframe` (NEM13).
 
 Spec compatibility: AEMO MDFF v2.6 (effective 29 September 2024). The
 allowed-value tables — quality flags, transaction codes, reason codes,
-units of measure — are exposed as constants in :mod:`nem12_reader.spec`.
+units of measure — are exposed as constants in :mod:`aemo_mdff_reader.spec`.
 """
 
 from __future__ import annotations

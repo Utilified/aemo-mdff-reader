@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 from collections import Counter
 
-from nem12_reader import parse, parse_header
+from aemo_mdff_reader import parse, parse_header
 
 
 def main(path: str) -> None:

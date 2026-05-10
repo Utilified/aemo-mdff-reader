@@ -3,6 +3,6 @@ include README.md
 include CHANGELOG.md
 include CONTRIBUTING.md
 include pyproject.toml
-include nem12_reader/py.typed
+include aemo_mdff_reader/py.typed
 recursive-include tests *.py *.csv
 recursive-include benchmarks *.py
