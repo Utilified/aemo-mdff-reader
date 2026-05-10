@@ -43,7 +43,7 @@ jobs:
         run: |
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install dist/*.whl
-          /tmp/smoke/bin/python -c "import nem12_reader as m; print(m.__version__)"
+          /tmp/smoke/bin/python -c "import aemo_mdff_reader as m; print(m.__version__)"
           /tmp/smoke/bin/aemo-mdff-reader --version
       - uses: actions/upload-artifact@v4
         with:
