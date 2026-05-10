@@ -195,9 +195,15 @@ pytest
 ```
 
 CI runs ruff, mypy --strict, the test matrix on Python 3.9 → 3.12 /
-Linux / macOS / Windows, `pip-audit`, `bandit`, and a wheel-install
-smoke test. Releases are signed with sigstore and published to PyPI
-via Trusted Publishing on tag.
+Linux / macOS / Windows, `pip-audit`, `bandit`, CodeQL, OpenSSF
+Scorecard, and a wheel-install smoke test.
+
+Releases are automated by [release-please](https://github.com/googleapis/release-please)
+from [Conventional Commits](https://www.conventionalcommits.org/) on
+`main`, then signed with sigstore, attested with SLSA build provenance
+and a CycloneDX SBOM, and published to PyPI via Trusted Publishing.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor commit
+conventions and the full release flow.
 
 ## License
 

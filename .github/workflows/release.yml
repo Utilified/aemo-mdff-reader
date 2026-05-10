@@ -12,12 +12,17 @@ name: Release
 #      Environment: pypi
 #   2. Create a GitHub environment named "pypi" with required reviewers.
 #
-# Usage: git tag v2.0.0 && git push --tags
+# Usage:
+#   - Automated: release-please.yml dispatches this workflow after merging
+#     a release-please PR (the GITHUB_TOKEN-pushed tag will not auto-trigger
+#     this workflow, hence the explicit dispatch).
+#   - Manual: git tag vX.Y.Z && git push --tags
 
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read
