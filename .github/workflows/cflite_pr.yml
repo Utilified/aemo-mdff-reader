@@ -25,12 +25,12 @@ jobs:
         sanitizer: [address, undefined]
     steps:
       - name: Build fuzzers (${{ matrix.sanitizer }})
-        uses: google/clusterfuzzlite/actions/build_fuzzers@1791edb8e7eba1aaeb29d1ae4279750c1a1d3367 # v1
+        uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
           sanitizer: ${{ matrix.sanitizer }}
       - name: Run fuzzers (${{ matrix.sanitizer }})
-        uses: google/clusterfuzzlite/actions/run_fuzzers@1791edb8e7eba1aaeb29d1ae4279750c1a1d3367 # v1
+        uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
           fuzz-seconds: 300
