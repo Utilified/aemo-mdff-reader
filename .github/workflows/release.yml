@@ -53,11 +53,21 @@ jobs:
           /tmp/smoke/bin/python -c "import aemo_mdff_reader as m; print(m.__version__)"
           /tmp/smoke/bin/aemo-mdff-reader --version
       - name: Generate build provenance attestation
+        id: provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: |
             dist/*.whl
             dist/*.tar.gz
+      # Stage the provenance bundle as a file alongside the release so
+      # OpenSSF Scorecard's signed-releases check (which scans release
+      # assets, not GitHub's attestations API) sees an in-toto provenance
+      # artefact and awards full marks.
+      - name: Stage provenance bundle for the release
+        run: |
+          mkdir -p provenance
+          cp "${{ steps.provenance.outputs.bundle-path }}" "provenance/aemo_mdff_reader.intoto.jsonl"
+          ls -la provenance/
       # SBOM is written outside dist/ so the publish job's PyPI upload
       # (which only accepts .whl/.tar.gz) is not contaminated. anchore's
       # sbom-action does not auto-create the parent directory of
@@ -86,6 +96,10 @@ jobs:
         with:
           name: sbom
           path: sbom/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: provenance
+          path: provenance/
 
   publish:
     name: Publish to PyPI
@@ -150,6 +164,10 @@ jobs:
         with:
           name: sbom
           path: sbom/
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: provenance
+          path: provenance/
       - name: Create GitHub Release with notes from CHANGELOG
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
@@ -159,3 +177,4 @@ jobs:
             dist/*.whl
             signatures/*
             sbom/*
+            provenance/*

@@ -1,0 +1,39 @@
+name: ClusterFuzzLite PR fuzz
+
+# Per-PR fuzz run. Builds the harnesses, runs each for ``fuzz-seconds``
+# seconds, and fails the PR if a crash is found. Shorter runtime keeps
+# PR feedback fast; the scheduled batch in cflite_batch.yml does the
+# longer corpus-extending runs.
+
+on:
+  pull_request:
+    paths:
+      - "aemo_mdff_reader/**"
+      - "fuzz/**"
+      - ".clusterfuzzlite/**"
+      - ".github/workflows/cflite_pr.yml"
+
+permissions: read-all
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined]
+    steps:
+      - name: Build fuzzers (${{ matrix.sanitizer }})
+        uses: google/clusterfuzzlite/actions/build_fuzzers@1791edb8e7eba1aaeb29d1ae4279750c1a1d3367 # v1
+        with:
+          language: python
+          sanitizer: ${{ matrix.sanitizer }}
+      - name: Run fuzzers (${{ matrix.sanitizer }})
+        uses: google/clusterfuzzlite/actions/run_fuzzers@1791edb8e7eba1aaeb29d1ae4279750c1a1d3367 # v1
+        with:
+          language: python
+          fuzz-seconds: 300
+          mode: code-change
+          sanitizer: ${{ matrix.sanitizer }}
+          output-sarif: true
