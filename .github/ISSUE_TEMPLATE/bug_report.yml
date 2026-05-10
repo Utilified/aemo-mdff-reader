@@ -1,0 +1,76 @@
+name: Bug report
+description: Report a defect in aemo-mdff-reader
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report.
+
+        **Please sanitise any sample data before posting.** NMIs and
+        meter serial numbers must be redacted or replaced with synthetic
+        values. See [SECURITY.md](../blob/main/SECURITY.md) for guidance
+        — if you've found a security issue, use private vulnerability
+        reporting instead of opening an issue here.
+
+  - type: dropdown
+    id: python-version
+    attributes:
+      label: Python version
+      options:
+        - "3.9"
+        - "3.10"
+        - "3.11"
+        - "3.12"
+        - "3.13"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      description: Output of `pip show aemo-mdff-reader` (Version line) or git ref.
+      placeholder: "pip show aemo-mdff-reader"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: |
+        A few sanitised NEM12 / NEM13 rows or a short script that triggers
+        the bug. Do NOT include real NMIs or meter serials.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include the full traceback if one was raised.
+      render: text
+    validations:
+      required: true
