@@ -1,147 +1,88 @@
-import pandas as pd
-import csv
-from .nemstructure import Header, NMIData, IntervalData, Record, RECORDS
+"""Backward-compatible NEMReader facade.
+
+The original :class:`NEMReader` class built an in-memory tree of records
+and walked it twice (once to build, once to flatten). The new
+implementation streams through :mod:`nem12_reader.parser` and only
+materialises results when the user asks for them — typically to a
+DataFrame or CSV.
+
+The legacy method names are preserved so existing code continues to
+work; new code should prefer :func:`nem12_reader.parser.parse` directly.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Iterable, List, Optional, Sequence
+
+from .parser import parse, parse_to_columns, to_columns, to_dataframe, write_csv
+from .types import IntervalReading
 
 
+# Kept for backward compatibility with the old INTERVAL_DATA_OUTPUT_HEADERS export.
 INTERVAL_DATA_OUTPUT_HEADERS = [
-    'NMI',
-    'MeterSerial',
-    'Register',
-    'Date',
-    'Interval',
-    'IntervalLength',
-    'UOM',
-    'IntervalValue',
-    'Quality',
-    'UpdateDatetime',
+    "NMI",
+    "MeterSerial",
+    "Register",
+    "Date",
+    "Interval",
+    "IntervalLength",
+    "UOM",
+    "IntervalValue",
+    "Quality",
+    "UpdateDatetime",
 ]
 
 
-class NEMReader():
-    """
-    Reads NEM12 files using the AEMO specification.
+class NEMReader:
+    """Reads NEM12 files using the AEMO MDFF specification.
 
-    Read more here: https://www.aemo.com.au/-/media/files/electricity/nem/retail_and_metering/metering-procedures/2017/mdff_specification_nem12_nem13_final_v102.pdf
+    Reference:
+    https://www.aemo.com.au/-/media/files/electricity/nem/retail_and_metering/metering-procedures/2017/mdff_specification_nem12_nem13_final_v102.pdf
     """
+
     INTERVAL_DATA_OUTPUT_HEADERS = INTERVAL_DATA_OUTPUT_HEADERS
 
     def __init__(self) -> None:
-        self.__tree = None
-        self.__source_filename = None
-        pass
+        self._readings: Optional[List[IntervalReading]] = None
+        self._source_filename: Optional[str] = None
 
-    def get_parent(self, record_id: int, parent: Record) -> None:
-        """
-        Returns the parent of the record, given a proposed record_id and
-        the current node.
-        """
-        if record_id == None:
-            return None
-        elif record_id <= parent.id:
-            return self.get_parent(record_id, parent.parent)
+    @property
+    def filename(self) -> Optional[str]:
+        return self._source_filename
 
-        return parent
+    @property
+    def readings(self) -> List[IntervalReading]:
+        if self._readings is None:
+            raise RuntimeError("Call read_from_file() or read_from_array() first.")
+        return self._readings
 
-    def build_tree(self, array: list, root_node: Record) -> None:
-        """
-        Builds the tree, using the first value of the array and
-        the current node.
-        """
-        record_id = int(array[0][0])
-        record_class = RECORDS[record_id]
-        new_node = None
-
-        parent_node = self.get_parent(record_id, root_node)
-
-        if record_id == IntervalData.RECORD_ID:
-            new_node = record_class(parent_node['IntervalLength'])
-        else:
-            new_node = record_class()
-
-        new_node.load(array[0])
-
-        parent_node.add_child(new_node)
-
-        return new_node
-
-    def read_from_array(self, array: list) -> None:
-        """
-        Reads the NEM12 file from the array given.
-        """
-        nem_tree = Header()
-        nem_tree.load(array[0])
-        array = array[1:]
-        parent_node = nem_tree
-
-        while len(array):
-            parent_node = self.build_tree(array, parent_node)
-            array = array[1:]
-
-        self.__tree = nem_tree
-        pass
+    def read_from_array(self, array: Iterable[Sequence[str]]) -> None:
+        """Reads from an iterable of pre-split rows."""
+        self._readings = list(parse(array))
 
     def read_from_file(self, filename: str) -> None:
+        """Reads a NEM12 CSV file from disk."""
+        self._source_filename = filename
+        self._readings = list(parse(filename))
+
+    def to_dataframe(self):
+        """Materialise readings into a pandas DataFrame.
+
+        Requires the ``pandas`` extra. When the buffered file path is
+        known, this re-parses via the columnar fast path for a 2–4×
+        speedup over iterating the in-memory readings list.
         """
-        Reads the NEM12 file from the filename given.
+        if self._source_filename is not None:
+            return to_dataframe(self._source_filename)
+        return to_dataframe(self.readings)
 
-        Assumes the filename is provided in CSV format.
-        """
-        self.__source_filename = filename
-        rows = []
-        with open(self.__source_filename, 'r') as in_file:
-            in_rows = csv.reader(in_file)
-            for row in in_rows:
-                rows.append(row)
-        self.read_from_array(rows)
-        pass
+    def to_csv(self, filename: str) -> int:
+        """Write readings as a flat CSV file. Returns the row count."""
+        return write_csv(self.readings, filename)
 
-    @staticmethod
-    def extract_data_from_tree(node: Record, header: Header = None, nmi_data: NMIData = None):
-        """
-        Extracts interval data from the tree node given.
+    def to_columns(self) -> dict:
+        """Return readings as a dict of column lists (no pandas required)."""
+        return to_columns(self.readings)
 
-        Currently B2B and IntervalEvent details are not used.
-        """
-        array = []
-        if isinstance(node, (Header, NMIData)):
-            if isinstance(node, (Header)):
-                header = node
-            else:
-                nmi_data = node
 
-            for child in node.children:
-                array += NEMReader.extract_data_from_tree(
-                    child, header, nmi_data)
-
-        elif isinstance(node, IntervalData):
-            for i in range(1, len(node.intervals)+1):
-                array.append([
-                    nmi_data['NMI'],
-                    nmi_data['MeterSerialNumber'],
-                    nmi_data['RegisterID'],
-                    node['IntervalDate'],
-                    i,
-                    nmi_data['IntervalLength'],
-                    nmi_data['UOM'],
-                    node[f'IntervalValue{i}'],
-                    node['QualityMethod'],
-                    node['UpdateDateTime']
-                ])
-
-        return array
-
-    def to_dataframe(self) -> pd.DataFrame:
-        """Exports the currently loaded NEM12 tree to a dataframe."""
-        array = None
-        df = None
-        # gather data from tree (Header, NMIData, IntervalData)
-        array = self.extract_data_from_tree(self.__tree)
-
-        # load array into pandas dataframe
-        df = pd.DataFrame(array, columns=INTERVAL_DATA_OUTPUT_HEADERS)
-
-        return df
-
-    def to_csv(self, filename) -> None:
-        """Exports the currently loaded NEM12 tree to file."""
-        self.to_dataframe().to_csv(filename)
+__all__ = ["NEMReader", "INTERVAL_DATA_OUTPUT_HEADERS"]

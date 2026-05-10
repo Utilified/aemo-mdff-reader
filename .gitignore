@@ -1,8 +1,38 @@
-# ignore venv
-venv
-# ignore visualcode files
-.vscode
-# ignore test directory
-test
+# Virtual envs
+venv/
+.venv/
+env/
 
-__pycache__
+# Editor / IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# Build artefacts
+build/
+dist/
+wheelhouse/
+
+# Test / coverage / type-check caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Local fixture / scratch files (keep tests/fixtures/sample_nem12.csv tracked)
+/test.csv
+/test/
+*.local.csv
