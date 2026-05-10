@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from nem12_reader import (
+from aemo_mdff_reader import (
     AccumulationReading,
     IntervalReading,
     parse_accumulations,
@@ -86,7 +86,7 @@ def test_short_250_row_raises():
         ["100", "NEM13", "202401010000", "X", "Y"],
         ["250", "NMI", "C", "R"],
     ]
-    from nem12_reader import NEM12ParseError
+    from aemo_mdff_reader import NEM12ParseError
 
     with pytest.raises(NEM12ParseError):
         list(parse_accumulations(rows))
@@ -136,7 +136,7 @@ def test_write_accumulations_csv(tmp_path):
 
 
 def test_cli_accumulations_records(tmp_path):
-    from nem12_reader.cli import main
+    from aemo_mdff_reader.cli import main
 
     out = tmp_path / "out.csv"
     rc = main([str(NEM13_FIXTURE), "-o", str(out), "--records", "accumulations"])
@@ -149,7 +149,7 @@ def test_cli_accumulations_records(tmp_path):
 
 def test_intervals_iterator_skips_250_rows():
     # The default `parse()` should ignore 250 records (NEM13).
-    from nem12_reader import parse
+    from aemo_mdff_reader import parse
 
     out = list(parse(NEM13_FIXTURE))
     assert out == []

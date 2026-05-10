@@ -11,12 +11,12 @@ from pathlib import Path
 
 import pytest
 
-from nem12_reader import (
+from aemo_mdff_reader import (
     iter_columns_chunks,
     iter_dataframes,
     parse,
 )
-from nem12_reader.aggregate import iter_chunks
+from aemo_mdff_reader.aggregate import iter_chunks
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_nem12.csv"
 
@@ -91,7 +91,7 @@ def test_iter_dataframes_yields_dataframes_of_chunk_size():
 
 def test_iter_dataframes_concat_matches_to_dataframe():
     pd = pytest.importorskip("pandas")
-    from nem12_reader import to_dataframe
+    from aemo_mdff_reader import to_dataframe
 
     chunked = pd.concat(list(iter_dataframes(FIXTURE, chunk_size=30)), ignore_index=True)
     bulk = to_dataframe(FIXTURE)
@@ -125,7 +125,7 @@ def test_iter_columns_chunks_yields_dict_chunks():
 
 
 def test_iter_columns_chunks_concat_matches_parse_to_columns():
-    from nem12_reader import parse_to_columns
+    from aemo_mdff_reader import parse_to_columns
 
     chunks = list(iter_columns_chunks(FIXTURE, chunk_size=37))
     full = parse_to_columns(FIXTURE)

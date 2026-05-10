@@ -6,8 +6,8 @@ intervals up to daily totals. Each function takes any iterable of
 :class:`IntervalReading` objects, so they compose with :func:`parse`,
 ``parse_to_columns``, and the buffered :class:`NEMReader` facade.
 
->>> from nem12_reader import parse
->>> from nem12_reader.aggregate import daily_totals
+>>> from aemo_mdff_reader import parse
+>>> from aemo_mdff_reader.aggregate import daily_totals
 >>> for d in daily_totals(parse("metering.csv")):
 ...     print(d.nmi, d.register_id, d.interval_date, d.total)
 """
@@ -34,8 +34,8 @@ def iter_chunks(items: Iterable[_T], size: int) -> Iterator[List[_T]]:
     The final batch may be shorter than ``size`` if the input is not a
     multiple of it. Empty input yields no batches.
 
-    >>> from nem12_reader import parse
-    >>> from nem12_reader.aggregate import iter_chunks
+    >>> from aemo_mdff_reader import parse
+    >>> from aemo_mdff_reader.aggregate import iter_chunks
     >>> for batch in iter_chunks(parse("metering.csv"), 5_000):
     ...     db.executemany(INSERT_SQL, [r.to_dict() for r in batch])
     """

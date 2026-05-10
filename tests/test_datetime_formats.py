@@ -6,7 +6,7 @@ from datetime import datetime
 
 import pytest
 
-from nem12_reader.parser import NEM12ParseError, _parse_datetime
+from aemo_mdff_reader.parser import NEM12ParseError, _parse_datetime
 
 
 @pytest.mark.parametrize(
