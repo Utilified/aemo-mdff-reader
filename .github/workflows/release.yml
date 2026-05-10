@@ -53,6 +53,13 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: build
+    # Gated on a repository variable so the workflow runs cleanly on
+    # tag push before PyPI Trusted Publishing is configured. To enable
+    # publishing, set ``vars.PYPI_PUBLISH_ENABLED == 'true'`` under
+    # *Settings → Secrets and variables → Actions → Variables* (and
+    # configure the ``pypi`` Environment + Trusted Publishing per
+    # CONTRIBUTING.md).
+    if: ${{ vars.PYPI_PUBLISH_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
