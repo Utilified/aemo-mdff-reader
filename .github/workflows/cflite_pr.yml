@@ -1,14 +1,21 @@
 name: ClusterFuzzLite PR fuzz
 
-# Per-PR fuzz: smoke-test the build and run a quick (60s) crash search
-# on PRs that touch parser or fuzz code. The longer corpus-extending
-# pass + the second sanitizer live in cflite_batch.yml so PRs aren't
-# held up by fuzzing.
+# Per-PR fuzz: smoke-test the build and run a quick (30s) crash search
+# only on PRs whose changes actually reach the parser. The longer
+# corpus-extending pass + the second sanitizer live in cflite_batch.yml
+# so PRs aren't held up by fuzzing.
+#
+# `paths` is enumerated explicitly (not `aemo_mdff_reader/**`) to skip
+# fuzzing on cli / aggregate / reader / sql changes — none of which
+# the harnesses exercise.
 
 on:
   pull_request:
     paths:
-      - "aemo_mdff_reader/**"
+      - "aemo_mdff_reader/__init__.py"
+      - "aemo_mdff_reader/parser.py"
+      - "aemo_mdff_reader/types.py"
+      - "aemo_mdff_reader/spec.py"
       - "fuzz/**"
       - ".clusterfuzzlite/**"
       - ".github/workflows/cflite_pr.yml"
@@ -17,20 +24,22 @@ permissions: read-all
 
 jobs:
   fuzz:
-    name: fuzz (address, 60s)
+    name: fuzz (address, 30s)
+    # Skip draft PRs — fuzz on the final form, not the in-progress one.
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 6
     steps:
       - name: Build fuzzers
         uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
           sanitizer: address
-      - name: Run fuzzers (60s smoke)
+      - name: Run fuzzers (30s smoke)
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
-          fuzz-seconds: 60
+          fuzz-seconds: 30
           mode: code-change
           sanitizer: address
           output-sarif: true
