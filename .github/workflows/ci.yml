@@ -33,7 +33,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
       - name: Test
-        run: pytest -v --cov=nem12_reader --cov-report=term-missing --cov-report=xml
+        run: pytest -v --cov=aemo_mdff_reader --cov-report=term-missing --cov-report=xml
       - name: Wheel install + import smoke
         if: matrix.python-version == '3.12' && runner.os == 'Linux'
         run: |
@@ -41,7 +41,7 @@ jobs:
           python -m build --wheel
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install dist/*.whl
-          /tmp/smoke/bin/python -c "import nem12_reader; print(nem12_reader.__version__)"
+          /tmp/smoke/bin/python -c "import aemo_mdff_reader; print(aemo_mdff_reader.__version__)"
           /tmp/smoke/bin/aemo-mdff-reader --version
 
   lint:
@@ -92,10 +92,10 @@ jobs:
         # We have no required runtime deps; this audits dev extras + tooling.
         run: pip-audit --skip-editable
       - name: Bandit static security analysis
-        # The legacy nem12_reader.sql module is opt-in (extras_require=mysql)
+        # The legacy aemo_mdff_reader.sql module is opt-in (extras_require=mysql)
         # and not refactored in v2 — exclude it from this scan, same as mypy
         # and ruff. We scan the new core (parser, types, reader, cli).
-        run: bandit -r nem12_reader -ll --exclude nem12_reader/sql
+        run: bandit -r aemo_mdff_reader -ll --exclude aemo_mdff_reader/sql
 
   build:
     name: build sdist + wheel
