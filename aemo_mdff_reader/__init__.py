@@ -48,7 +48,7 @@ from .types import (
     NMIDetails,
 )
 
-__version__ = "2.1.0"  # x-release-please-version
+__version__ = "2.2.0"  # x-release-please-version
 
 __all__ = [
     "INTERVAL_DATA_OUTPUT_HEADERS",
