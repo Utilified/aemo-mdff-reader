@@ -262,6 +262,14 @@ class AccumulationReading:
 
     Each 250 record represents a previous + current register read pair
     plus a calculated quantity (consumption between the two reads).
+
+    .. note::
+       ``direction_indicator`` is stored as the raw string from the
+       file. AEMO MDFF v2.6 §5.3 restricts it to ``"I"`` (Import) or
+       ``"E"`` (Export), but real-world files occasionally contain
+       ``"B"`` (bi-directional) or ``"N"`` (not applicable). The parser
+       accepts either case and leaves enforcement to the caller; see
+       :data:`nem12_reader.spec.DIRECTION_INDICATORS` for the spec set.
     """
 
     __slots__ = (

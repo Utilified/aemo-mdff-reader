@@ -15,6 +15,7 @@ from __future__ import annotations
 import csv
 import itertools
 import os
+import re
 from datetime import datetime, timedelta
 from typing import IO, Any, Dict, Iterable, Iterator, List, Optional, Sequence, Union
 
@@ -26,6 +27,11 @@ from .types import (
     IntervalReading,
     NMIDetails,
 )
+
+# Trailing timezone offset in ISO 8601 form: ``+HH:MM`` or ``+HHMM``.
+# Anchored to the end of the string and requires at least 4 digits so we
+# never accidentally match the dash inside an ISO date like ``2024-01-01``.
+_TZ_OFFSET_RE = re.compile(r"([+-]\d{2}:\d{2}|[+-]\d{4})$")
 
 HEADER_RECORD = "100"
 NMI_RECORD = "200"
@@ -55,11 +61,31 @@ class NEM12ParseError(ValueError):
 def _parse_datetime(value: str) -> Optional[datetime]:
     """Parse a NEM12 date/datetime field.
 
-    The spec allows YYYYMMDD (8) and YYYYMMDDhhmmss (14). We also accept
-    ISO date (10) for tolerance with some retailer exports.
+    Accepted forms (all return naive ``datetime`` objects — any timezone
+    suffix on the input is silently stripped, matching the existing
+    contract that callers attach the local AEMO market timezone
+    themselves):
+
+    * ``YYYYMMDD`` (spec: Date(8))
+    * ``YYYYMMDDhhmmss`` (spec: DateTime(14))
+    * ``YYYYMMDDhhmm`` (DateTime(12) — seen in some retailer exports)
+    * ``YYYY-MM-DD`` (ISO 8601 date — tolerance for non-spec exports)
+    * ``YYYY-MM-DDTHH:MM:SS`` and ``YYYY-MM-DD HH:MM:SS`` (ISO 8601
+      date-time, with or without microseconds)
+    * Any of the above followed by ``Z``, ``+HH:MM``, ``+HHMM``,
+      ``-HH:MM``, or ``-HHMM`` — the timezone suffix is dropped.
     """
     if not value:
         return None
+
+    # Strip trailing timezone suffix if present. The result is fed
+    # straight back through the fixed-width or ISO branches below.
+    if value.endswith("Z"):
+        value = value[:-1]
+    m = _TZ_OFFSET_RE.search(value)
+    if m:
+        value = value[: m.start()]
+
     n = len(value)
     if n == 14:
         return datetime(
@@ -82,6 +108,20 @@ def _parse_datetime(value: str) -> Optional[datetime]:
         return datetime(int(value[0:4]), int(value[4:6]), int(value[6:8]))
     if n == 10 and value[4] == "-" and value[7] == "-":
         return datetime(int(value[0:4]), int(value[5:7]), int(value[8:10]))
+
+    # ISO 8601 date-time fall-through, e.g. ``2024-01-01T00:00:00`` or
+    # ``2024-01-01 00:00:00`` (with optional microseconds). datetime's
+    # native ``fromisoformat`` is strict about the leading dashes /
+    # colons; the basic form ``YYYYMMDDTHHMMSS`` is only recognised on
+    # Python 3.11+, so we don't promise it.
+    if "T" in value or " " in value:
+        try:
+            dt = datetime.fromisoformat(value)
+        except ValueError:
+            pass
+        else:
+            return dt.replace(tzinfo=None) if dt.tzinfo is not None else dt
+
     raise NEM12ParseError(f"Unrecognised date/time value: {value!r}")
 
 
@@ -186,9 +226,26 @@ def _open_rows(source: RowSource) -> Iterator[Sequence[str]]:
 def parse(source: RowSource) -> Iterator[IntervalReading]:
     """Parse a NEM12 file and yield :class:`IntervalReading` objects.
 
-    ``source`` may be a path, an open file/text stream, or an iterable
-    yielding either raw CSV lines (str) or already-split rows (list/tuple
-    of str). Iteration is lazy: memory use is O(1) in file size.
+    ``source`` accepts any of:
+
+    * a filesystem path (``str`` or ``os.PathLike``);
+    * an open text stream / file-like object;
+    * an iterable of raw CSV lines (``Iterable[str]``);
+    * an iterable of already-split rows (``Iterable[Sequence[str]]``,
+      e.g. a ``list[list[str]]`` you've built from
+      ``csv.reader(...).splitlines()``).
+
+    The pre-split-rows form is convenient when the data is already in
+    memory — say, decoded from a multipart upload — without forcing it
+    back through ``csv.reader``::
+
+        rows = list(csv.reader(StringIO(payload)))
+        for r in parse(rows):
+            ...
+
+    Iteration is lazy: memory use is O(1) in file size when ``source``
+    is a path or a stream. Pre-loaded sources keep whatever memory the
+    caller already paid for them, but the parser itself adds no extra.
     """
     state = _ParserState()
     rows = iter(_open_rows(source))

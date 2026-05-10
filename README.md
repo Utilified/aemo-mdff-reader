@@ -120,8 +120,15 @@ exact signatures.
   validation than the parser performs.
 - **Tolerant**: UTF-8 BOM is consumed silently, LF and CRLF both work,
   and empty interval cells are coerced to `0.0` (use `quality_method`
-  to distinguish missing from zero). The parser also accepts non-spec
-  IntervalLengths (1, 60, etc.); strict callers should compare against
+  to distinguish missing from zero). Datetime fields accept the spec
+  forms (`YYYYMMDD`, `YYYYMMDDhhmmss`) and a few common non-spec
+  variants (`YYYY-MM-DD`, ISO `YYYY-MM-DDTHH:MM:SS`, with or without a
+  `Z` / `±HH:MM` / `±HHMM` timezone suffix — the suffix is stripped
+  and parsed datetimes are returned naive). `direction_indicator` on
+  250 records passes through whatever the file emits; the spec set is
+  `spec.DIRECTION_INDICATORS = {"I", "E"}` but `B` and `N` appear in
+  the wild. The parser also accepts non-spec IntervalLengths (1, 60,
+  etc.); strict callers should compare against
   `spec.ALLOWED_INTERVAL_LENGTHS` (= `{5, 15, 30}`).
 - **Migration from v1**: `NEMReader` still works. The internal
   `nem12_reader.nemstructure` package is gone — see the API table
