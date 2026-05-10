@@ -1,12 +1,12 @@
-# nem12-reader
+# aemo-mdff-reader
 
-[![CI](https://github.com/utilified/nem12-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/utilified/nem12-reader/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/nem12-reader.svg)](https://pypi.org/project/nem12-reader/)
-[![Python versions](https://img.shields.io/pypi/pyversions/nem12-reader.svg)](https://pypi.org/project/nem12-reader/)
+[![CI](https://github.com/utilified/aemo-mdff-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/utilified/aemo-mdff-reader/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/aemo-mdff-reader.svg)](https://pypi.org/project/aemo-mdff-reader/)
+[![Python versions](https://img.shields.io/pypi/pyversions/aemo-mdff-reader.svg)](https://pypi.org/project/aemo-mdff-reader/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Fast, zero-dependency streaming reader for AEMO **NEM12** and **NEM13**
-metering files.
+metering files. Implements AEMO MDFF (Meter Data File Format) v2.6.
 
 - O(1) memory — iterate through millions of intervals.
 - Pure stdlib core; pandas / PyMySQL are opt-in extras.
@@ -16,12 +16,17 @@ metering files.
 ## Install
 
 ```bash
-pip install nem12-reader
+pip install aemo-mdff-reader
 
 # optional extras
-pip install nem12-reader[pandas]   # to_dataframe() / parquet
-pip install nem12-reader[mysql]    # SQL persistence
+pip install aemo-mdff-reader[pandas]   # to_dataframe() / parquet
+pip install aemo-mdff-reader[mysql]    # SQL persistence
 ```
+
+The Python import name is `nem12_reader` and the CLI is
+`nem12-reader` — both kept short for ergonomics. The PyPI distribution
+is named after the AEMO spec (MDFF) so it surfaces in searches for
+either format. Same precedent as `pip install Pillow` / `import PIL`.
 
 ## Use
 
@@ -184,7 +189,7 @@ them for files that won't fit in RAM.
 ## Development
 
 ```bash
-git clone https://github.com/utilified/nem12-reader.git
+git clone https://github.com/utilified/aemo-mdff-reader.git
 cd nem12-reader
 pip install -e .[dev]
 pytest

@@ -8,6 +8,16 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ### Highlights
 
+- **Renamed to `aemo-mdff-reader` (PyPI dist + GitHub repo).** v1
+  shipped as `nem12-reader` on both surfaces; v2 adopts the AEMO spec
+  name (MDFF — Meter Data File Format) so the project surfaces in
+  searches for both NEM12 (interval) and NEM13 (accumulation) data
+  and is unambiguously distinct from the unrelated `nem-reader`
+  package on PyPI. The Python import name remains `nem12_reader` and
+  the CLI remains `nem12-reader` — precedent:
+  `pip install Pillow` / `import PIL`. GitHub serves redirects from
+  the previous repo URL, so existing git pins
+  (`git@github.com:Utilified/nem12-reader.git`) continue to work.
 - **Spec target: AEMO MDFF v2.6** (effective 29 September 2024).
   Previous v1.x of this package targeted MDFF v1.02 (2017). All
   record-type schemas, allowed values, and reason-code descriptions
@@ -17,7 +27,7 @@ project follows [Semantic Versioning](https://semver.org/).
   exposed as constants in the new `nem12_reader.spec` module.
 - **Zero required dependencies**: pandas, PyMySQL, wrapt, six, tomli,
   pytz, python-dateutil are no longer required. pandas / PyMySQL are
-  available as opt-in extras (`pip install nem12-reader[pandas]`,
+  available as opt-in extras (`pip install aemo-mdff-reader[pandas]`,
   `[mysql]`).
 - **Streaming parser** (`nem12_reader.parse`): O(1) memory, works on
   arbitrarily large files.

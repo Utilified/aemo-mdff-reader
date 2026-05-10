@@ -1,10 +1,11 @@
-# nem12-reader has no required runtime dependencies.
+# aemo-mdff-reader has no required runtime dependencies.
+# (The Python import name is ``nem12_reader``.)
 #
 # Optional features can be enabled via extras:
-#   pip install nem12-reader[pandas]   # to_dataframe(), parquet output
-#   pip install nem12-reader[parquet]  # parquet output (pandas + pyarrow)
-#   pip install nem12-reader[mysql]    # SQL persistence (Storer)
-#   pip install nem12-reader[dev]      # test suite, linting
+#   pip install aemo-mdff-reader[pandas]   # to_dataframe(), parquet output
+#   pip install aemo-mdff-reader[parquet]  # parquet output (pandas + pyarrow)
+#   pip install aemo-mdff-reader[mysql]    # SQL persistence (Storer)
+#   pip install aemo-mdff-reader[dev]      # test suite, linting
 #
 # This file is kept for ``pip install -r requirements.txt`` users; it
 # installs the package in editable mode along with the dev extras.
