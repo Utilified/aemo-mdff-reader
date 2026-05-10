@@ -16,9 +16,10 @@ description = "Fast streaming reader for AEMO MDFF NEM12 / NEM13 metering files.
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-# Python 3.8 is EOL (Oct 2024) and setuptools 77+ — required for the
-# PEP 639 license metadata above — does not publish a 3.8 wheel.
-requires-python = ">=3.9"
+# Python 3.9 reached end-of-life in October 2025; CI hash-pinning of
+# pandas/pyarrow/numpy no longer resolves cleanly against 3.9 wheels.
+# 3.10 is the lowest supported runtime as of v3.0.
+requires-python = ">=3.10"
 authors = [
     { name = "Utilified Holdings Pty Ltd" },
 ]
@@ -30,7 +31,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -95,7 +95,7 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
@@ -128,10 +128,6 @@ ignore = [
 "aemo_mdff_reader/sql/*" = ["F401", "F403", "F405", "UP031"]
 
 [tool.mypy]
-# Lowest supported runtime is 3.9 (see ``requires-python``), but mypy
-# 1.16+ no longer accepts ``<3.10`` here. Type-checking against 3.10
-# still produces useful results — we don't use any 3.10-only typing
-# features (no ``match`` statements, no PEP 604 ``X | Y`` at runtime).
 python_version = "3.10"
 strict = true
 files = ["aemo_mdff_reader"]
