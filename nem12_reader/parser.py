@@ -18,7 +18,9 @@ from typing import IO, Any, Dict, Iterable, Iterator, List, Optional, Sequence, 
 
 from .types import (
     AccumulationReading,
+    B2BDetails,
     Header,
+    IntervalEvent,
     IntervalReading,
     NMIDetails,
 )
@@ -807,17 +809,234 @@ def write_accumulations_csv(
             f.close()
 
 
+# --------------------------------------------------------------------------
+# 400 Interval events / 500 + 550 B2B records
+# --------------------------------------------------------------------------
+
+
+def _parse_interval_event(
+    row: Sequence[str],
+    nmi: NMIDetails,
+    interval_date: datetime,
+) -> IntervalEvent:
+    """Parse a single 400 (Interval Event) row.
+
+    Field order per AEMO MDFF v1.02:
+        1. RecordIndicator (400)
+        2. StartInterval                4. QualityMethod
+        3. EndInterval                  5. ReasonCode
+                                        6. ReasonDescription
+    """
+    if len(row) < 4:
+        raise NEM12ParseError(f"400 event row has {len(row)} fields; spec requires at least 4")
+
+    def _get(i: int) -> str:
+        return row[i] if i < len(row) else ""
+
+    return IntervalEvent(
+        nmi=nmi.nmi,
+        meter_serial_number=nmi.meter_serial_number,
+        register_id=nmi.register_id,
+        interval_date=interval_date,
+        start_interval=int(row[1]),
+        end_interval=int(row[2]),
+        quality_method=_get(3),
+        reason_code=_parse_int(_get(4)),
+        reason_description=_get(5),
+    )
+
+
+def _parse_b2b(row: Sequence[str]) -> B2BDetails:
+    """Parse a 500 or 550 B2B detail row.
+
+    500 fields: 500, TransCode, RetServiceOrder, ReadDateTime, IndexRead.
+    550 fields: 550, PreviousTransCode, PreviousRetServiceOrder,
+                CurrentTransCode, CurrentRetServiceOrder.
+    """
+    rec = row[0]
+
+    def _get(i: int) -> str:
+        return row[i] if i < len(row) else ""
+
+    if rec == B2B_RECORD:  # 500
+        return B2BDetails(
+            record_kind=rec,
+            trans_code=_get(1),
+            ret_service_order=_get(2),
+            read_datetime=_parse_datetime(_get(3)),
+            index_read=_get(4),
+        )
+    if rec == ACCUMULATION_B2B_RECORD:  # 550
+        return B2BDetails(
+            record_kind=rec,
+            previous_trans_code=_get(1),
+            previous_ret_service_order=_get(2),
+            current_trans_code=_get(3),
+            current_ret_service_order=_get(4),
+        )
+    raise NEM12ParseError(f"Unsupported B2B record indicator: {rec!r}")
+
+
+def parse_events(source: RowSource) -> Iterator[IntervalEvent]:
+    """Yield NEM12 400 (interval event) rows attached to their parent
+    200 / 300 context.
+
+    Iteration is lazy and O(1) memory.
+    """
+    state = _ParserState()
+    last_interval_date: Optional[datetime] = None
+    for row in _open_rows(source):
+        if not row:
+            continue
+        rec = row[0]
+        if rec == NMI_RECORD:
+            state.current_nmi = _parse_nmi(row)
+        elif rec == INTERVAL_RECORD:
+            if state.current_nmi is None:
+                raise NEM12ParseError("300 interval row encountered before any 200 NMI row")
+            last_interval_date = _parse_datetime(row[1])
+        elif rec == EVENT_RECORD:
+            if state.current_nmi is None or last_interval_date is None:
+                raise NEM12ParseError("400 event row encountered without a parent 300 row")
+            yield _parse_interval_event(row, state.current_nmi, last_interval_date)
+        elif rec == END_RECORD:
+            return
+
+
+def parse_b2b(source: RowSource) -> Iterator[B2BDetails]:
+    """Yield 500 (NEM12 B2B) and 550 (NEM13 B2B) records as a stream."""
+    for row in _open_rows(source):
+        if not row:
+            continue
+        rec = row[0]
+        if rec in (B2B_RECORD, ACCUMULATION_B2B_RECORD):
+            yield _parse_b2b(row)
+        elif rec == END_RECORD:
+            return
+
+
+# --------------------------------------------------------------------------
+# Validation utilities
+# --------------------------------------------------------------------------
+
+
+def nmi_checksum(nmi: str) -> int:
+    """Compute the AEMO NMI checksum digit (0-9).
+
+    Implements the AEMO NMI Checksum Algorithm: for the 10-character NMI,
+    each character is converted to its ASCII value; characters at odd
+    positions (counting from the right, starting at 1) are doubled; the
+    digits of all values are summed; the checksum is
+    ``(10 - (sum % 10)) % 10``.
+
+    Raises :class:`ValueError` if ``nmi`` is not exactly 10 characters
+    or contains a non-printable / non-ASCII character.
+    """
+    if len(nmi) != 10:
+        raise ValueError(f"NMI must be exactly 10 characters, got {nmi!r}")
+    if any(not (32 < ord(c) < 127) for c in nmi):
+        raise ValueError(f"NMI contains non-printable characters: {nmi!r}")
+    total = 0
+    # Iterate left-to-right; position from the right is (10 - i).
+    # Double when (10 - i) is odd, i.e. when i is even (0, 2, 4, 6, 8).
+    for i, ch in enumerate(nmi):
+        v = ord(ch)
+        if i % 2 == 0:
+            v *= 2
+        while v:
+            total += v % 10
+            v //= 10
+    return (10 - (total % 10)) % 10
+
+
+def validate_nmi(nmi: str, checksum_digit: Optional[str] = None) -> bool:
+    """Return True if the NMI is structurally valid.
+
+    A NEM12/13 NMI is exactly 10 printable ASCII characters. If
+    ``checksum_digit`` is provided, it is also compared against the
+    computed AEMO NMI checksum.
+    """
+    try:
+        computed = nmi_checksum(nmi)
+    except ValueError:
+        return False
+    if checksum_digit is None:
+        return True
+    return str(computed) == checksum_digit
+
+
+def validate_file(source: RowSource) -> List[str]:
+    """Run lightweight structural checks against a NEM12 / NEM13 file.
+
+    Returns a list of human-readable problem descriptions; an empty list
+    means the file passed all structural checks. This does not replace
+    full parsing — it surfaces common issues early (missing 100 header,
+    missing 900 footer, 300 row outside any 200 context, wrong 250 field
+    count, NMI structural validity) so callers can fail fast.
+    """
+    issues: List[str] = []
+    saw_header = False
+    saw_footer = False
+    current_nmi: Optional[NMIDetails] = None
+    seen_nmis: set[str] = set()
+    line_no = 0
+    for row in _open_rows(source):
+        line_no += 1
+        if not row:
+            continue
+        rec = row[0]
+        if rec == HEADER_RECORD:
+            if saw_header:
+                issues.append(f"line {line_no}: duplicate 100 header")
+            saw_header = True
+            if line_no != 1:
+                issues.append(f"line {line_no}: 100 header should be the first row")
+            try:
+                _parse_header(row)
+            except NEM12ParseError as exc:
+                issues.append(f"line {line_no}: {exc}")
+        elif rec == NMI_RECORD:
+            try:
+                current_nmi = _parse_nmi(row)
+                if not validate_nmi(current_nmi.nmi):
+                    issues.append(f"line {line_no}: NMI {current_nmi.nmi!r} has invalid structure")
+                seen_nmis.add(current_nmi.nmi)
+            except NEM12ParseError as exc:
+                issues.append(f"line {line_no}: {exc}")
+        elif rec == INTERVAL_RECORD:
+            if current_nmi is None:
+                issues.append(f"line {line_no}: 300 row encountered before any 200 NMI row")
+        elif rec == ACCUMULATION_RECORD:
+            if len(row) < 20:
+                issues.append(
+                    f"line {line_no}: 250 row has {len(row)} fields, spec requires at least 20"
+                )
+        elif rec == END_RECORD:
+            saw_footer = True
+    if not saw_header:
+        issues.append("missing 100 header record")
+    if not saw_footer:
+        issues.append("missing 900 footer record")
+    return issues
+
+
 __all__ = [
+    "ACCUMULATION_FIELDS",
     "NEM12ParseError",
+    "nmi_checksum",
     "parse",
     "parse_accumulations",
     "parse_accumulations_to_columns",
     "parse_all",
+    "parse_b2b",
+    "parse_events",
     "parse_header",
     "parse_to_columns",
     "to_accumulations_dataframe",
     "to_columns",
     "to_dataframe",
+    "validate_file",
+    "validate_nmi",
     "write_accumulations_csv",
     "write_csv",
 ]

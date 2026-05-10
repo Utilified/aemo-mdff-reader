@@ -73,6 +73,30 @@ jobs:
           pip install -e .[dev]
       - run: mypy
 
+  security:
+    name: security (pip-audit + bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          # Pre-upgrade build tooling so we audit the latest CVE-clean
+          # baseline (otherwise we may flag CVEs in setup-python's bundled
+          # pip / setuptools rather than anything we introduced).
+          python -m pip install --upgrade pip setuptools wheel
+          pip install pip-audit bandit
+      - name: Audit our declared dependencies for known CVEs
+        # We have no required runtime deps; this audits dev extras + tooling.
+        run: pip-audit --skip-editable
+      - name: Bandit static security analysis
+        # The legacy nem12_reader.sql module is opt-in (extras_require=mysql)
+        # and not refactored in v2 — exclude it from this scan, same as mypy
+        # and ruff. We scan the new core (parser, types, reader, cli).
+        run: bandit -r nem12_reader -ll --exclude nem12_reader/sql
+
   build:
     name: build sdist + wheel
     runs-on: ubuntu-latest

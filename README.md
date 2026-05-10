@@ -86,6 +86,40 @@ write_csv(parse("metering.csv"), "intervals.csv")
 write_accumulations_csv(parse_accumulations("manual.csv"), "accumulations.csv")
 ```
 
+### Quality / event flags (400 records)
+
+```python
+from nem12_reader import parse_events
+
+for evt in parse_events("metering.csv"):
+    print(evt.nmi, evt.interval_date, evt.start_interval,
+          evt.end_interval, evt.quality_method)
+```
+
+### B2B transaction details (500 / 550 records)
+
+```python
+from nem12_reader import parse_b2b
+
+for b in parse_b2b("metering.csv"):
+    if b.record_kind == "500":
+        print(b.trans_code, b.ret_service_order, b.read_datetime)
+    else:  # "550" (NEM13)
+        print(b.previous_trans_code, b.current_trans_code)
+```
+
+### Validation
+
+```python
+from nem12_reader import nmi_checksum, validate_nmi, validate_file
+
+nmi_checksum("NMI1234567")          # -> int (0-9), AEMO NMI checksum digit
+validate_nmi("NMI1234567")          # -> True (structural check)
+validate_nmi("NMI1234567", "2")     # -> True if "2" matches the checksum
+
+issues = validate_file("metering.csv")  # list[str], empty if file is valid
+```
+
 ### CLI
 
 ```bash
@@ -93,6 +127,7 @@ nem12-reader metering.csv -o out.csv
 nem12-reader metering.csv > out.csv                          # stdout
 nem12-reader metering.csv -o out.parquet --format parquet
 nem12-reader manual.csv --records accumulations -o acc.csv   # NEM13
+nem12-reader metering.csv --validate                         # spec check
 ```
 
 ### Backward-compatible facade
@@ -164,19 +199,21 @@ NEM13. Reference:
 
 Supported records:
 
-| Indicator | Record                  | Streaming API                       |
-| --------- | ----------------------- | ----------------------------------- |
-| `100`     | Header                  | `parse_header()`                    |
-| `200`     | NMI / channel details   | parent context for 300 / 400 rows   |
-| `250`     | NMI accumulation (NEM13)| `parse_accumulations()`             |
-| `300`     | Interval data (NEM12)   | `parse()`                           |
-| `400`     | Interval event          | currently skipped by default reader |
-| `500`     | B2B details             | currently skipped by default reader |
-| `550`     | Accumulation B2B (NEM13)| currently skipped by default reader |
-| `900`     | End of file             | terminates iteration                |
+| Indicator | Record                   | Streaming API                                      |
+| --------- | ------------------------ | -------------------------------------------------- |
+| `100`     | Header                   | `parse_header()`                                   |
+| `200`     | NMI / channel details    | parent context for 300 / 400 rows                  |
+| `250`     | NMI accumulation (NEM13) | `parse_accumulations()`                            |
+| `300`     | Interval data (NEM12)    | `parse()`                                          |
+| `400`     | Interval event           | `parse_events()` → `IntervalEvent`                 |
+| `500`     | B2B details              | `parse_b2b()` → `B2BDetails(record_kind="500")`    |
+| `550`     | Accumulation B2B (NEM13) | `parse_b2b()` → `B2BDetails(record_kind="550")`    |
+| `900`     | End of file              | terminates iteration                               |
 
 `parse_all()` emits 300 and 250 records together in file order for mixed
-NEM12/NEM13 inputs.
+NEM12/NEM13 inputs. Use `validate_file()` for a fast structural
+conformance check (presence of 100/900, 300 rows under a 200, NMI
+structural validity, 250 row field count).
 
 ## Quality, type-checking, and CI
 
@@ -188,7 +225,10 @@ The package ships with:
 - **`pytest --cov`** with a 90% coverage floor (`tool.coverage.fail_under`).
 - **`twine check --strict`** plus a wheel-install + `nem12-reader --version`
   smoke test on every PR.
-- **PyPI publish on tag** via Trusted Publishing
+- **`pip-audit`** for dependency CVEs and **`bandit`** for static
+  security analysis on every PR.
+- **PyPI publish on tag** via Trusted Publishing, with **sigstore**
+  signatures attached to the GitHub Release
   (`.github/workflows/release.yml`).
 - **Dependabot** for GitHub Actions and pip dependencies.
 - **Pre-commit** config for local development (`pre-commit install`).

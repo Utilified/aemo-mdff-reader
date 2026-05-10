@@ -252,8 +252,54 @@ class AccumulationReading:
         self.msats_load_datetime = msats_load_datetime
 
 
+class B2BDetails:
+    """500 (NEM12) / 550 (NEM13) record — B2B transaction details.
+
+    The 500 record carries a single transaction (TransCode +
+    RetServiceOrder + ReadDateTime + IndexRead). The 550 record carries
+    a paired previous/current transaction. We surface them with the
+    same class and a ``record_kind`` discriminator (``"500"`` or
+    ``"550"``) so callers can branch when needed.
+    """
+
+    __slots__ = (
+        "current_ret_service_order",
+        "current_trans_code",
+        "index_read",
+        "previous_ret_service_order",
+        "previous_trans_code",
+        "read_datetime",
+        "record_kind",
+        "ret_service_order",
+        "trans_code",
+    )
+
+    def __init__(
+        self,
+        record_kind: str,
+        trans_code: str = "",
+        ret_service_order: str = "",
+        read_datetime: Optional[datetime] = None,
+        index_read: str = "",
+        previous_trans_code: str = "",
+        previous_ret_service_order: str = "",
+        current_trans_code: str = "",
+        current_ret_service_order: str = "",
+    ) -> None:
+        self.record_kind = record_kind
+        self.trans_code = trans_code
+        self.ret_service_order = ret_service_order
+        self.read_datetime = read_datetime
+        self.index_read = index_read
+        self.previous_trans_code = previous_trans_code
+        self.previous_ret_service_order = previous_ret_service_order
+        self.current_trans_code = current_trans_code
+        self.current_ret_service_order = current_ret_service_order
+
+
 __all__ = [
     "AccumulationReading",
+    "B2BDetails",
     "Header",
     "IntervalEvent",
     "IntervalReading",

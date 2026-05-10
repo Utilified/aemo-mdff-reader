@@ -23,6 +23,7 @@ from .parser import (
     parse_accumulations,
     parse_accumulations_to_columns,
     parse_to_columns,
+    validate_file,
     write_accumulations_csv,
     write_csv,
 )
@@ -58,6 +59,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Output format. 'parquet' requires pandas + pyarrow.",
     )
     p.add_argument(
+        "--validate",
+        action="store_true",
+        help=(
+            "Run structural validation against the AEMO MDFF spec and exit. "
+            "Returns 0 if the file is valid, 1 if issues were found."
+        ),
+    )
+    p.add_argument(
         "--version",
         action="version",
         version=f"nem12-reader {__version__}",
@@ -84,6 +93,15 @@ def _emit_parquet(args: argparse.Namespace) -> int:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = _build_parser().parse_args(argv)
+
+    if args.validate:
+        issues = validate_file(args.input)
+        if issues:
+            for msg in issues:
+                print(msg, file=sys.stderr)
+            return 1
+        print("OK", file=sys.stderr)
+        return 0
 
     if args.format == "parquet":
         return _emit_parquet(args)

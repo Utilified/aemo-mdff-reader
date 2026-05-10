@@ -19,9 +19,14 @@ project follows [Semantic Versioning](https://semver.org/).
 - **Full NEM13 (250) accumulation support**: `parse_accumulations`,
   `to_accumulations_dataframe`, `write_accumulations_csv`. `parse_all`
   emits both NEM12 and NEM13 records in file order.
+- **Full record-type coverage**: `parse_events()` (400 quality/event
+  rows), `parse_b2b()` (500 NEM12 + 550 NEM13 transaction details).
+- **Spec-conformance utilities**: `nmi_checksum()`, `validate_nmi()`,
+  `validate_file()` plus a `nem12-reader --validate` CLI flag.
 - **CLI** (`nem12-reader`): convert NEM12 / NEM13 → flat CSV / parquet
   from the command line. Was previously documented but not implemented.
-  `--records intervals|accumulations` selects the record type.
+  `--records intervals|accumulations` selects the record type;
+  `--validate` runs structural checks against the AEMO MDFF spec.
 
 ### Added
 
