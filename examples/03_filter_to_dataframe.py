@@ -1,6 +1,6 @@
 """Filter a NEM12 file by NMI / date range and load the result into pandas.
 
-Requires the `pandas` extra:  pip install nem12-reader[pandas]
+Requires the `pandas` extra:  pip install aemo-mdff-reader[pandas]
 
 Usage:  python examples/03_filter_to_dataframe.py path/to/file.csv NMI1234567
 """

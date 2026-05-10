@@ -4,9 +4,15 @@ requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nem12-reader"
+# PyPI distribution name uses the AEMO spec name (MDFF — Meter Data
+# File Format) so search hits land for both NEM12 (interval) and
+# NEM13 (accumulation) readers. The Python import name remains
+# ``nem12_reader`` for ergonomics and backward compatibility — the
+# Pillow / PIL precedent (``pip install Pillow`` → ``import PIL``)
+# applies here.
+name = "aemo-mdff-reader"
 version = "2.0.0"
-description = "Fast streaming reader for AEMO NEM12 / NEM13 metering files. Zero required dependencies."
+description = "Fast streaming reader for AEMO MDFF NEM12 / NEM13 metering files. Zero required dependencies."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -56,10 +62,10 @@ dev = [
 nem12-reader = "nem12_reader.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/utilified/nem12-reader"
-Repository = "https://github.com/utilified/nem12-reader"
-Issues = "https://github.com/utilified/nem12-reader/issues"
-Changelog = "https://github.com/utilified/nem12-reader/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/utilified/aemo-mdff-reader"
+Repository = "https://github.com/utilified/aemo-mdff-reader"
+Issues = "https://github.com/utilified/aemo-mdff-reader/issues"
+Changelog = "https://github.com/utilified/aemo-mdff-reader/blob/master/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["nem12_reader*"]

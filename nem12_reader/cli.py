@@ -155,7 +155,7 @@ def _emit_parquet(args: argparse.Namespace) -> int:
         import pandas as pd
     except ImportError:
         print(
-            "parquet output requires pandas + pyarrow: pip install nem12-reader[parquet]",
+            "parquet output requires pandas + pyarrow: pip install aemo-mdff-reader[parquet]",
             file=sys.stderr,
         )
         return 2

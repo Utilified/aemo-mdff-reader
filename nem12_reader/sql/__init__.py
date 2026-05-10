@@ -2,7 +2,7 @@
 
 Importing this subpackage does NOT eagerly import :mod:`pymysql`.
 The dependency is only required when you actually instantiate
-:class:`Storer`. Install with ``pip install nem12-reader[mysql]``.
+:class:`Storer`. Install with ``pip install aemo-mdff-reader[mysql]``.
 """
 
 from __future__ import annotations
