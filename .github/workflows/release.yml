@@ -45,7 +45,7 @@ jobs:
           /tmp/smoke/bin/pip install dist/*.whl
           /tmp/smoke/bin/python -c "import aemo_mdff_reader as m; print(m.__version__)"
           /tmp/smoke/bin/aemo-mdff-reader --version
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -79,7 +79,7 @@ jobs:
             mv dist/*.sigstore* signatures/
           fi
           ls -la dist/ signatures/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: signatures
           path: signatures/
