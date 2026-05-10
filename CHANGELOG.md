@@ -4,6 +4,13 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.4](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.3...v2.0.4) (2026-05-10)
+
+
+### Bug Fixes
+
+* release-please dispatch + SBOM directory creation ([#17](https://github.com/Utilified/aemo-mdff-reader/issues/17)) ([8e3cd13](https://github.com/Utilified/aemo-mdff-reader/commit/8e3cd13ca11bad3399efd2e5fd2fe5ae6bcb2a90))
+
 ## [2.0.3](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.2...v2.0.3) (2026-05-10)
 
 Supply-chain hardening and release-process automation. No source or
