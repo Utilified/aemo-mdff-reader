@@ -4,6 +4,13 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.3](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.2...v2.0.3) (2026-05-10)
+
+
+### Bug Fixes
+
+* rename release-please config to default path ([#15](https://github.com/Utilified/aemo-mdff-reader/issues/15)) ([843d25f](https://github.com/Utilified/aemo-mdff-reader/commit/843d25ff8c35944e08eb70ebfdb076acdf1c9855))
+
 ## [Unreleased]
 
 ## [2.0.2] — 2026-05-10
