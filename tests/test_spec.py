@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 import aemo_mdff_reader
 
 spec = aemo_mdff_reader.spec
@@ -17,7 +19,9 @@ def test_spec_version_metadata():
     # ISO-8601 effective date keeps callers parseable.
     assert spec.SPEC_EFFECTIVE_DATE == "2024-09-29"
     assert "Meter Data File Format" in spec.SPEC_DOCUMENT_TITLE
-    assert spec.SPEC_URL.startswith("https://www.aemo.com.au")
+    parsed = urlparse(spec.SPEC_URL)
+    assert parsed.scheme == "https"
+    assert parsed.hostname == "www.aemo.com.au"
 
 
 def test_allowed_interval_lengths_match_spec():
