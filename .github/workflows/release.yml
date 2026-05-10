@@ -1,0 +1,112 @@
+name: Release
+
+# Publishes to PyPI when a version tag (vX.Y.Z) is pushed to the repo.
+#
+# Setup required (one-time, by repo admin):
+#   1. Configure Trusted Publishing on PyPI:
+#      https://docs.pypi.org/trusted-publishers/
+#      Project name: nem12-reader
+#      Owner: utilified
+#      Repository: nem12-reader
+#      Workflow: release.yml
+#      Environment: pypi
+#   2. Create a GitHub environment named "pypi" with required reviewers.
+#
+# Usage: git tag v2.0.0 && git push --tags
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+      - name: Build sdist + wheel
+        run: python -m build
+      - name: Validate distributions
+        run: twine check --strict dist/*
+      - name: Smoke-test the wheel
+        run: |
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install dist/*.whl
+          /tmp/smoke/bin/python -c "import nem12_reader as m; print(m.__version__)"
+          /tmp/smoke/bin/nem12-reader --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/nem12-reader/
+    permissions:
+      id-token: write   # for trusted publishing + sigstore (no API token needed)
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Sign distributions with sigstore
+        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        with:
+          inputs: ./dist/*.tar.gz ./dist/*.whl
+      - name: Stage signatures for the GitHub Release, then remove from dist
+        # ``pypa/gh-action-pypi-publish`` is supposed to upload only
+        # ``.whl`` / ``.tar.gz``, but we move signatures out of dist/
+        # explicitly so a future regression cannot accidentally try to
+        # upload ``.sigstore.json`` to PyPI (which would fail the run).
+        run: |
+          mkdir -p signatures
+          if compgen -G "dist/*.sigstore*" > /dev/null; then
+            mv dist/*.sigstore* signatures/
+          fi
+          ls -la dist/ signatures/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signatures
+          path: signatures/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+  github-release:
+    name: Attach signatures to GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # for creating the GitHub Release
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: actions/download-artifact@v4
+        with:
+          name: signatures
+          path: signatures/
+      - name: Create GitHub Release with notes from CHANGELOG
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+            signatures/*
