@@ -151,7 +151,11 @@ Maintainers do not run `git tag` by hand for normal releases.
    build → SLSA build provenance attestation → CycloneDX SBOM +
    attestation → upload artefacts → wait on the `pypi` Environment
    reviewer → sigstore sign → PyPI Trusted Publishing → GitHub Release
-   with wheel + sdist + signatures + SBOM attached.
+   with wheel + sdist + sigstore signatures + SBOM + the in-toto
+   provenance bundle (`provenance/aemo_mdff_reader.intoto.jsonl`)
+   attached. The provenance file lets external scanners (Scorecard,
+   in-toto verifiers) confirm the artefacts were built by this
+   workflow without a round-trip to the GitHub attestations API.
 7. Approve the deployment in the `pypi` Environment when GitHub
    notifies you. The publish completes; verify at
    https://pypi.org/project/aemo-mdff-reader/ and
