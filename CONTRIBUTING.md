@@ -1,0 +1,108 @@
+# Contributing
+
+Thanks for your interest in improving nem12-reader. The repository is
+small and the bar for contributions is straightforward: a pull request
+that passes CI and doesn't regress the public benchmark is welcome.
+
+## Setup
+
+```bash
+git clone https://github.com/utilified/nem12-reader.git
+cd nem12-reader
+python -m venv .venv && source .venv/bin/activate
+pip install -e .[dev]
+pytest
+```
+
+## Running the test suite
+
+```bash
+pytest -v
+pytest --cov=nem12_reader --cov-report=term-missing
+```
+
+A small, sanitized NEM12 sample lives at
+`tests/fixtures/sample_nem12.csv`. To generate larger synthetic files
+for ad-hoc testing or benchmarking:
+
+```bash
+python tests/fixtures/generate.py /tmp/big.csv --nmis 4 --days 365 --interval-minutes 5
+```
+
+## Performance
+
+`benchmarks/bench_parser.py` is the canonical performance test. Please
+run it before and after changes that touch the hot path
+(`parser.py::_emit_intervals`, `parse_to_columns`, `to_columns`):
+
+```bash
+python benchmarks/bench_parser.py --nmis 4 --days 365 --interval-minutes 5
+```
+
+The streaming and columnar fast paths must remain at or above the
+current published throughput.
+
+## Code style
+
+- Pure stdlib in the core. **No** new required runtime dependencies.
+  Optional features go behind `[project.optional-dependencies]`.
+- Type hints on all public symbols.
+- Keep `nem12_reader.types` slots-based — per-row allocation is on
+  the hot path.
+
+## Reporting issues
+
+Please open an issue with:
+
+1. The Python version and OS.
+2. A minimal reproducer (a few NEM12 rows is usually enough).
+3. The expected vs actual behaviour.
+
+If you can share a sanitized sample file (no real NMIs / meter
+serials), please attach it to the issue.
+
+## Releasing
+
+Maintainers only. Releases are tagged and pushed to GitHub; the
+`Release` workflow then builds, signs (sigstore), publishes to PyPI
+(via Trusted Publishing), and attaches signatures to the GitHub Release.
+
+### One-time setup (per project)
+
+Before the first release, configure these on PyPI / GitHub:
+
+1. **PyPI Trusted Publishing**: register the project at
+   https://pypi.org/manage/account/publishing/ with:
+   - PyPI project name: `nem12-reader`
+   - Owner: `utilified`
+   - Repository: `nem12-reader`
+   - Workflow filename: `release.yml`
+   - Environment name: `pypi`
+2. **GitHub Environment**: in *Settings → Environments*, create an
+   environment named `pypi`. Add required reviewers if you want
+   manual approval before publish (recommended for the first few
+   releases). Without this environment, the publish job will fail with
+   a confusing "environment not found" error.
+
+### Cutting a release
+
+```bash
+# Bump version in pyproject.toml AND nem12_reader/__init__.py.
+# Update CHANGELOG.md with the new section.
+git commit -am "release: vX.Y.Z"
+git tag vX.Y.Z
+git push origin main vX.Y.Z
+```
+
+The `Release` workflow takes over from here. Verify the published
+artefact at https://pypi.org/project/nem12-reader/ and the GitHub
+Release at https://github.com/utilified/nem12-reader/releases.
+
+### Local dry run
+
+```bash
+python -m build
+twine check --strict dist/*
+python -m venv /tmp/smoke && /tmp/smoke/bin/pip install dist/*.whl
+/tmp/smoke/bin/nem12-reader --version
+```

@@ -1,0 +1,141 @@
+[build-system]
+# 77+ supports PEP 639 (SPDX `license` expression + `license-files`).
+requires = ["setuptools>=77.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nem12-reader"
+version = "2.0.0"
+description = "Fast streaming reader for AEMO NEM12 / NEM13 metering files. Zero required dependencies."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+# Python 3.8 is EOL (Oct 2024) and setuptools 77+ — required for the
+# PEP 639 license metadata above — does not publish a 3.8 wheel.
+requires-python = ">=3.9"
+authors = [
+    { name = "Utilified Holdings Pty Ltd" },
+]
+keywords = ["nem12", "nem13", "aemo", "energy", "metering", "australia", "mdff"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Utilities",
+]
+# Core has no required runtime dependencies.
+dependencies = []
+
+[project.optional-dependencies]
+pandas = ["pandas>=1.3"]
+parquet = ["pandas>=1.3", "pyarrow>=10"]
+mysql = ["PyMySQL>=1.0"]
+dev = [
+    "pytest>=7",
+    "pytest-cov>=4",
+    "pandas>=1.3",
+    "pyarrow>=10",
+    "mypy>=1.8",
+    "ruff>=0.5",
+    "build>=1.0",
+    "twine>=5.0",
+    "packaging>=24.2",
+]
+
+[project.scripts]
+nem12-reader = "nem12_reader.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/utilified/nem12-reader"
+Repository = "https://github.com/utilified/nem12-reader"
+Issues = "https://github.com/utilified/nem12-reader/issues"
+Changelog = "https://github.com/utilified/nem12-reader/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["nem12_reader*"]
+
+[tool.setuptools.package-data]
+nem12_reader = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+branch = true
+source = ["nem12_reader"]
+omit = ["nem12_reader/sql/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 90
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # bugbear
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    # We use ``Union[...]`` / ``Optional[...]`` / ``Dict[...]`` so the
+    # type aliases work at runtime on 3.9 without ``from __future__
+    # import annotations`` everywhere. Adopting PEP 604 / PEP 585 syntax
+    # is a follow-up; left as-is to keep the public-API diff small.
+    "UP007",  # Use X | Y instead of Union[X, Y]
+    "UP045",  # Use X | None instead of Optional[X]
+    "UP006",  # Use builtin generics (dict[X, Y]) instead of typing.Dict
+    "UP035",  # Import abstract types from collections.abc instead of typing
+    "RUF002", # Ambiguous unicode in docstrings (× and – are intentional)
+    "RUF003", # Ambiguous unicode in comments
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]  # tests use assert
+"benchmarks/*" = ["E402"]  # path manipulation
+# Legacy SQL persistence module — pre-v2 code, not refactored here.
+"nem12_reader/sql/*" = ["F401", "F403", "F405", "UP031"]
+
+[tool.mypy]
+# Lowest supported runtime is 3.9 (see ``requires-python``), but mypy
+# 1.16+ no longer accepts ``<3.10`` here. Type-checking against 3.10
+# still produces useful results — we don't use any 3.10-only typing
+# features (no ``match`` statements, no PEP 604 ``X | Y`` at runtime).
+python_version = "3.10"
+strict = true
+files = ["nem12_reader"]
+# Optional dependencies that don't ship type stubs.
+[[tool.mypy.overrides]]
+module = ["pandas", "pandas.*", "pymysql", "pymysql.*", "pyarrow", "pyarrow.*"]
+ignore_missing_imports = true
+
+# The legacy SQL persistence module pre-dates the v2 typed core. It uses
+# pymysql, has no type annotations, and is opt-in. Skip strict checks here.
+[[tool.mypy.overrides]]
+module = ["nem12_reader.sql.*"]
+ignore_errors = true

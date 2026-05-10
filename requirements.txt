@@ -1,8 +1,11 @@
-numpy==1.24.2
-pandas==1.5.3
-PyMySQL==1.0.2
-python-dateutil==2.8.2
-pytz==2022.7.1
-six==1.16.0
-tomli==2.0.1
-wrapt==1.11.1
+# nem12-reader has no required runtime dependencies.
+#
+# Optional features can be enabled via extras:
+#   pip install nem12-reader[pandas]   # to_dataframe(), parquet output
+#   pip install nem12-reader[parquet]  # parquet output (pandas + pyarrow)
+#   pip install nem12-reader[mysql]    # SQL persistence (Storer)
+#   pip install nem12-reader[dev]      # test suite, linting
+#
+# This file is kept for ``pip install -r requirements.txt`` users; it
+# installs the package in editable mode along with the dev extras.
+-e .[dev]
