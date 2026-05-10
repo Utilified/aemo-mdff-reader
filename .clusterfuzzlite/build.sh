@@ -6,6 +6,5 @@ cd "$SRC/aemo-mdff-reader"
 pip3 install --no-cache-dir .
 
 for fuzzer in fuzz/fuzz_*.py; do
-  name="$(basename "$fuzzer" .py)"
-  compile_python_fuzzer "$fuzzer" --add-binary="${name}":"${name}"
+  compile_python_fuzzer "$fuzzer"
 done
