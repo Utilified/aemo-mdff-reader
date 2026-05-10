@@ -12,7 +12,7 @@ work; new code should prefer :func:`nem12_reader.parser.parse` directly.
 
 from __future__ import annotations
 
-from typing import Any, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Iterator, List, Optional, Sequence
 
 from .parser import Columns, parse, to_columns, to_dataframe, write_csv
 from .types import IntervalReading
@@ -63,6 +63,19 @@ class NEMReader:
         """Reads a NEM12 CSV file from disk."""
         self._source_filename = filename
         self._readings = list(parse(filename))
+
+    def __iter__(self) -> Iterator[IntervalReading]:
+        """Iterate over the buffered readings.
+
+        Lets callers write ``for r in reader: ...`` after
+        :meth:`read_from_file` or :meth:`read_from_array` instead of
+        going through ``reader.readings``.
+        """
+        return iter(self.readings)
+
+    def __len__(self) -> int:
+        """Number of buffered readings (after ``read_from_file``)."""
+        return len(self.readings)
 
     def to_dataframe(self) -> Any:
         """Materialise readings into a pandas DataFrame.

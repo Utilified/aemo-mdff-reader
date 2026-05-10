@@ -3,12 +3,43 @@
 These types form the public surface of the streaming parser. They use
 ``__slots__`` to keep per-row memory and allocation cost low when
 processing large files (millions of intervals).
+
+Each class exposes a ``to_dict()`` method for cheap conversion to a
+``dict`` — useful for JSON serialisation, dict-comprehension filtering,
+and bridging to systems that expect mappings.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
+
+
+def _slots_to_dict(obj: Any) -> Dict[str, Any]:
+    """Return a ``dict`` of an object's ``__slots__`` values."""
+    return {slot: getattr(obj, slot) for slot in obj.__slots__}
+
+
+def _quality_flag(quality_method: str) -> str:
+    """Return the 1-character quality flag from a ``QMM`` field.
+
+    The AEMO MDFF v2.6 spec defines QualityMethod as a 3-character
+    string ``QMM`` where ``Q`` is the 1-char quality flag (one of
+    ``A``, ``E``, ``F``, ``S``, ``V``) and ``MM`` is the 2-char method
+    flag (numeric, e.g. ``"53"``). When ``Q`` is ``A`` or ``V`` the
+    method flag is omitted, so the field may be just one character.
+    Empty input returns an empty string.
+    """
+    return quality_method[:1]
+
+
+def _method_flag(quality_method: str) -> str:
+    """Return the 2-character method flag from a ``QMM`` field.
+
+    Empty if the underlying QualityMethod has no method component
+    (e.g. quality flag ``"A"``).
+    """
+    return quality_method[1:3]
 
 
 class Header:
@@ -34,6 +65,10 @@ class Header:
             f"from_participant={self.from_participant!r}, "
             f"to_participant={self.to_participant!r})"
         )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return this record as a plain dict keyed by field name."""
+        return _slots_to_dict(self)
 
 
 class NMIDetails:
@@ -72,6 +107,10 @@ class NMIDetails:
         self.uom = uom
         self.interval_length = interval_length
         self.next_scheduled_read_date = next_scheduled_read_date
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return this record as a plain dict keyed by field name."""
+        return _slots_to_dict(self)
 
 
 class IntervalReading:
@@ -141,6 +180,30 @@ class IntervalReading:
         self.update_datetime = update_datetime
         self.msats_load_datetime = msats_load_datetime
 
+    @property
+    def quality_flag(self) -> str:
+        """The 1-character quality flag from ``quality_method`` (e.g. ``"A"``).
+
+        See AEMO MDFF v2.6 Appendix C and :data:`nem12_reader.spec.QUALITY_FLAGS`.
+        """
+        return _quality_flag(self.quality_method)
+
+    @property
+    def method_flag(self) -> str:
+        """The 2-character method flag from ``quality_method`` (e.g. ``"53"``).
+
+        Empty when the quality flag does not require a method (e.g. ``"A"``).
+        """
+        return _method_flag(self.quality_method)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return this record as a plain dict keyed by field name.
+
+        ``quality_flag`` and ``method_flag`` are derived from
+        ``quality_method`` and not included; access them directly.
+        """
+        return _slots_to_dict(self)
+
 
 class IntervalEvent:
     """400 record — quality/event flag covering a range of intervals."""
@@ -178,6 +241,20 @@ class IntervalEvent:
         self.quality_method = quality_method
         self.reason_code = reason_code
         self.reason_description = reason_description
+
+    @property
+    def quality_flag(self) -> str:
+        """The 1-character quality flag from ``quality_method``."""
+        return _quality_flag(self.quality_method)
+
+    @property
+    def method_flag(self) -> str:
+        """The 2-character method flag from ``quality_method``."""
+        return _method_flag(self.quality_method)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return this record as a plain dict keyed by field name."""
+        return _slots_to_dict(self)
 
 
 class AccumulationReading:
@@ -260,6 +337,30 @@ class AccumulationReading:
         self.update_datetime = update_datetime
         self.msats_load_datetime = msats_load_datetime
 
+    @property
+    def previous_quality_flag(self) -> str:
+        """1-character quality flag for the *previous* register read."""
+        return _quality_flag(self.previous_quality_method)
+
+    @property
+    def previous_method_flag(self) -> str:
+        """2-character method flag for the *previous* register read."""
+        return _method_flag(self.previous_quality_method)
+
+    @property
+    def current_quality_flag(self) -> str:
+        """1-character quality flag for the *current* register read."""
+        return _quality_flag(self.current_quality_method)
+
+    @property
+    def current_method_flag(self) -> str:
+        """2-character method flag for the *current* register read."""
+        return _method_flag(self.current_quality_method)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return this record as a plain dict keyed by field name."""
+        return _slots_to_dict(self)
+
 
 class B2BDetails:
     """500 (NEM12) / 550 (NEM13) record — B2B transaction details.
@@ -312,6 +413,10 @@ class B2BDetails:
         self.previous_ret_service_order = previous_ret_service_order
         self.current_trans_code = current_trans_code
         self.current_ret_service_order = current_ret_service_order
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return this record as a plain dict keyed by field name."""
+        return _slots_to_dict(self)
 
 
 __all__ = [

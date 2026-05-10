@@ -16,7 +16,7 @@ units of measure — are exposed as constants in :mod:`nem12_reader.spec`.
 
 from __future__ import annotations
 
-from . import spec
+from . import aggregate, spec
 from .parser import (
     NEM12ParseError,
     nmi_checksum,
@@ -59,6 +59,7 @@ __all__ = [
     "NEMReader",
     "NMIDetails",
     "__version__",
+    "aggregate",
     "nmi_checksum",
     "parse",
     "parse_accumulations",

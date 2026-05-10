@@ -45,9 +45,39 @@ From the command line:
 
 ```bash
 nem12-reader metering.csv -o out.csv
-nem12-reader metering.csv --validate            # spec check
-nem12-reader manual.csv --records accumulations # NEM13
+nem12-reader metering.csv --validate                       # spec check
+nem12-reader metering.csv --nmi NMI1234567 --start 2024-01-01 --end 2024-01-31
+nem12-reader manual.csv --records accumulations            # NEM13
 ```
+
+## Working with the data
+
+Each parsed record is a slots-based class with named attributes plus a
+`to_dict()` for JSON / dict pipelines:
+
+```python
+for r in parse("metering.csv"):
+    payload = r.to_dict()              # {"nmi": "...", "value": 0.12, ...}
+    print(r.quality_flag, r.method_flag)  # split of the QMM field, e.g. "S", "52"
+```
+
+For aggregation, `nem12_reader.aggregate` provides streaming helpers:
+
+```python
+from nem12_reader import parse
+from nem12_reader.aggregate import group_by_nmi, daily_totals
+
+for key, group in group_by_nmi(parse("metering.csv")):
+    # key = ChannelKey(nmi, register_id, nmi_suffix)
+    intervals = list(group)
+
+for day in daily_totals(parse("metering.csv")):
+    # day.total, day.interval_count, day.unique_quality_flags
+    print(day.nmi, day.interval_date.date(), day.total, day.uom)
+```
+
+End-to-end recipes — load + inspect, daily roll-up, filter to pandas,
+spec validation — live in [`examples/`](examples/).
 
 ## API at a glance
 
@@ -63,6 +93,9 @@ nem12-reader manual.csv --records accumulations # NEM13
 | Write a flat CSV (no pandas)          | `write_csv(rows, out)`        |
 | Validate against AEMO MDFF v2.6       | `validate_file(src)`          |
 | Compute / verify an NMI checksum      | `nmi_checksum`, `validate_nmi`|
+| Group readings by NMI / channel       | `aggregate.group_by_nmi(rows)`|
+| Roll up to daily totals               | `aggregate.daily_totals(rows)`|
+| Convert any record to a plain dict    | `r.to_dict()`                 |
 
 `src` can be a path, a file-like object, an iterable of CSV lines, or
 an iterable of pre-split rows. The v1 `NEMReader` facade
@@ -116,7 +149,7 @@ pip install -e .[dev]
 pytest
 ```
 
-CI runs ruff, mypy --strict, the test matrix on Python 3.8 → 3.12 /
+CI runs ruff, mypy --strict, the test matrix on Python 3.9 → 3.12 /
 Linux / macOS / Windows, `pip-audit`, `bandit`, and a wheel-install
 smoke test. Releases are signed with sigstore and published to PyPI
 via Trusted Publishing on tag.
