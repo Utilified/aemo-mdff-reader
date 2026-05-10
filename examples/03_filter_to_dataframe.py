@@ -12,7 +12,7 @@ from datetime import date
 
 import pandas as pd  # noqa: F401  — fails fast if not installed
 
-from nem12_reader import parse, to_dataframe
+from aemo_mdff_reader import parse, to_dataframe
 
 
 def main(path: str, nmi: str) -> None:

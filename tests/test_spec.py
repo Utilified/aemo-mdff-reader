@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import nem12_reader
-from nem12_reader import spec
+import aemo_mdff_reader
+from aemo_mdff_reader import spec
 
 
 def test_spec_module_is_re_exported():
-    """``nem12_reader.spec`` is part of the public API."""
-    assert nem12_reader.spec is spec
+    """``aemo_mdff_reader.spec`` is part of the public API."""
+    assert aemo_mdff_reader.spec is spec
 
 
 def test_spec_version_metadata():

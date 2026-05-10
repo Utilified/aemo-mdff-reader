@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 # PyPI distribution name uses the AEMO spec name (MDFF — Meter Data
 # File Format) so search hits land for both NEM12 (interval) and
 # NEM13 (accumulation) readers. The Python import name remains
-# ``nem12_reader`` for ergonomics and backward compatibility — the
+# ``aemo_mdff_reader`` for ergonomics and backward compatibility — the
 # Pillow / PIL precedent (``pip install Pillow`` → ``import PIL``)
 # applies here.
 name = "aemo-mdff-reader"
@@ -59,7 +59,7 @@ dev = [
 ]
 
 [project.scripts]
-nem12-reader = "nem12_reader.cli:main"
+aemo-mdff-reader = "aemo_mdff_reader.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/utilified/aemo-mdff-reader"
@@ -68,10 +68,10 @@ Issues = "https://github.com/utilified/aemo-mdff-reader/issues"
 Changelog = "https://github.com/utilified/aemo-mdff-reader/blob/master/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
-include = ["nem12_reader*"]
+include = ["aemo_mdff_reader*"]
 
 [tool.setuptools.package-data]
-nem12_reader = ["py.typed"]
+aemo_mdff_reader = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -79,8 +79,8 @@ addopts = "-ra"
 
 [tool.coverage.run]
 branch = true
-source = ["nem12_reader"]
-omit = ["nem12_reader/sql/*"]
+source = ["aemo_mdff_reader"]
+omit = ["aemo_mdff_reader/sql/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -125,7 +125,7 @@ ignore = [
 "tests/*" = ["B011"]  # tests use assert
 "benchmarks/*" = ["E402"]  # path manipulation
 # Legacy SQL persistence module — pre-v2 code, not refactored here.
-"nem12_reader/sql/*" = ["F401", "F403", "F405", "UP031"]
+"aemo_mdff_reader/sql/*" = ["F401", "F403", "F405", "UP031"]
 
 [tool.mypy]
 # Lowest supported runtime is 3.9 (see ``requires-python``), but mypy
@@ -134,7 +134,7 @@ ignore = [
 # features (no ``match`` statements, no PEP 604 ``X | Y`` at runtime).
 python_version = "3.10"
 strict = true
-files = ["nem12_reader"]
+files = ["aemo_mdff_reader"]
 # Optional dependencies that don't ship type stubs.
 [[tool.mypy.overrides]]
 module = ["pandas", "pandas.*", "pymysql", "pymysql.*", "pyarrow", "pyarrow.*"]
@@ -143,5 +143,5 @@ ignore_missing_imports = true
 # The legacy SQL persistence module pre-dates the v2 typed core. It uses
 # pymysql, has no type annotations, and is opt-in. Skip strict checks here.
 [[tool.mypy.overrides]]
-module = ["nem12_reader.sql.*"]
+module = ["aemo_mdff_reader.sql.*"]
 ignore_errors = true

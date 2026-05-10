@@ -11,7 +11,7 @@ metering files. Implements AEMO MDFF (Meter Data File Format) v2.6.
 - O(1) memory — iterate through millions of intervals.
 - Pure stdlib core; pandas / PyMySQL are opt-in extras.
 - ~2 M readings/sec on the columnar fast path.
-- Includes a `nem12-reader` CLI.
+- Includes an `aemo-mdff-reader` CLI.
 
 ## Install
 
@@ -23,15 +23,10 @@ pip install aemo-mdff-reader[pandas]   # to_dataframe() / parquet
 pip install aemo-mdff-reader[mysql]    # SQL persistence
 ```
 
-The Python import name is `nem12_reader` and the CLI is
-`nem12-reader` — both kept short for ergonomics. The PyPI distribution
-is named after the AEMO spec (MDFF) so it surfaces in searches for
-either format. Same precedent as `pip install Pillow` / `import PIL`.
-
 ## Use
 
 ```python
-from nem12_reader import parse
+from aemo_mdff_reader import parse
 
 for r in parse("metering.csv"):
     print(r.nmi, r.interval_start, r.value, r.uom)
@@ -40,7 +35,7 @@ for r in parse("metering.csv"):
 Or as a flat CSV / DataFrame:
 
 ```python
-from nem12_reader import parse, write_csv, to_dataframe
+from aemo_mdff_reader import parse, write_csv, to_dataframe
 
 write_csv(parse("metering.csv"), "out.csv")     # no pandas
 df = to_dataframe("metering.csv")                # needs [pandas]
@@ -49,10 +44,10 @@ df = to_dataframe("metering.csv")                # needs [pandas]
 From the command line:
 
 ```bash
-nem12-reader metering.csv -o out.csv
-nem12-reader metering.csv --validate                       # spec check
-nem12-reader metering.csv --nmi NMI1234567 --start 2024-01-01 --end 2024-01-31
-nem12-reader manual.csv --records accumulations            # NEM13
+aemo-mdff-reader metering.csv -o out.csv
+aemo-mdff-reader metering.csv --validate                       # spec check
+aemo-mdff-reader metering.csv --nmi NMI1234567 --start 2024-01-01 --end 2024-01-31
+aemo-mdff-reader manual.csv --records accumulations            # NEM13
 ```
 
 ## Working with the data
@@ -66,11 +61,11 @@ for r in parse("metering.csv"):
     print(r.quality_flag, r.method_flag)  # split of the QMM field, e.g. "S", "52"
 ```
 
-For aggregation, `nem12_reader.aggregate` provides streaming helpers:
+For aggregation, `aemo_mdff_reader.aggregate` provides streaming helpers:
 
 ```python
-from nem12_reader import parse
-from nem12_reader.aggregate import group_by_nmi, daily_totals
+from aemo_mdff_reader import parse
+from aemo_mdff_reader.aggregate import group_by_nmi, daily_totals
 
 for key, group in group_by_nmi(parse("metering.csv")):
     # key = ChannelKey(nmi, register_id, nmi_suffix)
@@ -111,7 +106,7 @@ Each `parse(...)` yields an `IntervalReading` with `nmi`,
 `interval_length`, `interval_date`, `interval_start`, `interval_end`,
 `interval_index`, `value`, `quality_method`, `reason_code`,
 `reason_description`, `update_datetime`, `msats_load_datetime`. See
-the type stubs (`from nem12_reader import IntervalReading`) for the
+the type stubs (`from aemo_mdff_reader import IntervalReading`) for the
 exact signatures.
 
 ## Notes
@@ -121,7 +116,7 @@ exact signatures.
   `300`, `400`, `500`, `550`, `900` are all surfaced; unknown indicators
   are ignored. Allowed values for quality flags, transaction codes,
   reason codes, units of measure, and direction indicators are exposed
-  as constants in `nem12_reader.spec` for callers that want stricter
+  as constants in `aemo_mdff_reader.spec` for callers that want stricter
   validation than the parser performs.
 - **Tolerant**: UTF-8 BOM is consumed silently, LF and CRLF both work,
   and empty interval cells are coerced to `0.0` (use `quality_method`
@@ -136,7 +131,7 @@ exact signatures.
   etc.); strict callers should compare against
   `spec.ALLOWED_INTERVAL_LENGTHS` (= `{5, 15, 30}`).
 - **Migration from v1**: `NEMReader` still works. The internal
-  `nem12_reader.nemstructure` package is gone — see the API table
+  `aemo_mdff_reader.nemstructure` package is gone — see the API table
   above. `pandas` is now opt-in. See `CHANGELOG.md` for details.
 
 ## Performance
@@ -174,7 +169,7 @@ larger than a few hundred MiB. The chunked variants make pandas-based
 workflows safe on arbitrarily large inputs:
 
 ```python
-from nem12_reader import iter_dataframes
+from aemo_mdff_reader import iter_dataframes
 
 # Process a multi-GiB file 50,000 readings at a time.
 for df in iter_dataframes("huge.csv", chunk_size=50_000):
@@ -190,7 +185,7 @@ them for files that won't fit in RAM.
 
 ```bash
 git clone https://github.com/utilified/aemo-mdff-reader.git
-cd nem12-reader
+cd aemo-mdff-reader
 pip install -e .[dev]
 pytest
 ```

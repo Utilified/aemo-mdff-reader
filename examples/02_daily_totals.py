@@ -11,8 +11,8 @@ from __future__ import annotations
 import csv
 import sys
 
-from nem12_reader import parse
-from nem12_reader.aggregate import daily_totals
+from aemo_mdff_reader import parse
+from aemo_mdff_reader.aggregate import daily_totals
 
 
 def main(path: str) -> None:

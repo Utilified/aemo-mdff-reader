@@ -184,7 +184,7 @@ class IntervalReading:
     def quality_flag(self) -> str:
         """The 1-character quality flag from ``quality_method`` (e.g. ``"A"``).
 
-        See AEMO MDFF v2.6 Appendix C and :data:`nem12_reader.spec.QUALITY_FLAGS`.
+        See AEMO MDFF v2.6 Appendix C and :data:`aemo_mdff_reader.spec.QUALITY_FLAGS`.
         """
         return _quality_flag(self.quality_method)
 
@@ -269,7 +269,7 @@ class AccumulationReading:
        ``"E"`` (Export), but real-world files occasionally contain
        ``"B"`` (bi-directional) or ``"N"`` (not applicable). The parser
        accepts either case and leaves enforcement to the caller; see
-       :data:`nem12_reader.spec.DIRECTION_INDICATORS` for the spec set.
+       :data:`aemo_mdff_reader.spec.DIRECTION_INDICATORS` for the spec set.
     """
 
     __slots__ = (
