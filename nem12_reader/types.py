@@ -14,7 +14,7 @@ from typing import Optional
 class Header:
     """100 record — file header."""
 
-    __slots__ = ("version", "datetime", "from_participant", "to_participant")
+    __slots__ = ("datetime", "from_participant", "to_participant", "version")
 
     def __init__(
         self,
@@ -40,15 +40,15 @@ class NMIDetails:
     """200 record — NMI / channel details."""
 
     __slots__ = (
-        "nmi",
-        "nmi_configuration",
-        "register_id",
-        "nmi_suffix",
+        "interval_length",
         "mdm_data_stream_identifier",
         "meter_serial_number",
-        "uom",
-        "interval_length",
         "next_scheduled_read_date",
+        "nmi",
+        "nmi_configuration",
+        "nmi_suffix",
+        "register_id",
+        "uom",
     )
 
     def __init__(
@@ -78,22 +78,22 @@ class IntervalReading:
     """A single interval reading — one cell of a 300 record."""
 
     __slots__ = (
-        "nmi",
-        "meter_serial_number",
-        "register_id",
-        "nmi_suffix",
-        "uom",
-        "interval_length",
         "interval_date",
-        "interval_start",
         "interval_end",
         "interval_index",
-        "value",
+        "interval_length",
+        "interval_start",
+        "meter_serial_number",
+        "msats_load_datetime",
+        "nmi",
+        "nmi_suffix",
         "quality_method",
         "reason_code",
         "reason_description",
+        "register_id",
+        "uom",
         "update_datetime",
-        "msats_load_datetime",
+        "value",
     )
 
     def __init__(
@@ -137,15 +137,15 @@ class IntervalEvent:
     """400 record — quality/event flag covering a range of intervals."""
 
     __slots__ = (
-        "nmi",
-        "meter_serial_number",
-        "register_id",
-        "interval_date",
-        "start_interval",
         "end_interval",
+        "interval_date",
+        "meter_serial_number",
+        "nmi",
         "quality_method",
         "reason_code",
         "reason_description",
+        "register_id",
+        "start_interval",
     )
 
     def __init__(
@@ -171,9 +171,91 @@ class IntervalEvent:
         self.reason_description = reason_description
 
 
+class AccumulationReading:
+    """250 record — NEM13 NMI accumulation / manual-read data.
+
+    Each 250 record represents a previous + current register read pair
+    plus a calculated quantity (consumption between the two reads).
+    """
+
+    __slots__ = (
+        "current_quality_method",
+        "current_reason_code",
+        "current_reason_description",
+        "current_register_read",
+        "current_register_read_datetime",
+        "direction_indicator",
+        "mdm_data_stream_identifier",
+        "meter_serial_number",
+        "msats_load_datetime",
+        "next_scheduled_read_date",
+        "nmi",
+        "nmi_configuration",
+        "nmi_suffix",
+        "previous_quality_method",
+        "previous_reason_code",
+        "previous_reason_description",
+        "previous_register_read",
+        "previous_register_read_datetime",
+        "quantity",
+        "register_id",
+        "uom",
+        "update_datetime",
+    )
+
+    def __init__(
+        self,
+        nmi: str,
+        nmi_configuration: str,
+        register_id: str,
+        nmi_suffix: str,
+        mdm_data_stream_identifier: str,
+        meter_serial_number: str,
+        direction_indicator: str,
+        previous_register_read: float,
+        previous_register_read_datetime: Optional[datetime],
+        previous_quality_method: str,
+        previous_reason_code: Optional[int],
+        previous_reason_description: str,
+        current_register_read: float,
+        current_register_read_datetime: Optional[datetime],
+        current_quality_method: str,
+        current_reason_code: Optional[int],
+        current_reason_description: str,
+        quantity: float,
+        uom: str,
+        next_scheduled_read_date: Optional[datetime],
+        update_datetime: Optional[datetime],
+        msats_load_datetime: Optional[datetime],
+    ) -> None:
+        self.nmi = nmi
+        self.nmi_configuration = nmi_configuration
+        self.register_id = register_id
+        self.nmi_suffix = nmi_suffix
+        self.mdm_data_stream_identifier = mdm_data_stream_identifier
+        self.meter_serial_number = meter_serial_number
+        self.direction_indicator = direction_indicator
+        self.previous_register_read = previous_register_read
+        self.previous_register_read_datetime = previous_register_read_datetime
+        self.previous_quality_method = previous_quality_method
+        self.previous_reason_code = previous_reason_code
+        self.previous_reason_description = previous_reason_description
+        self.current_register_read = current_register_read
+        self.current_register_read_datetime = current_register_read_datetime
+        self.current_quality_method = current_quality_method
+        self.current_reason_code = current_reason_code
+        self.current_reason_description = current_reason_description
+        self.quantity = quantity
+        self.uom = uom
+        self.next_scheduled_read_date = next_scheduled_read_date
+        self.update_datetime = update_datetime
+        self.msats_load_datetime = msats_load_datetime
+
+
 __all__ = [
+    "AccumulationReading",
     "Header",
-    "NMIDetails",
-    "IntervalReading",
     "IntervalEvent",
+    "IntervalReading",
+    "NMIDetails",
 ]

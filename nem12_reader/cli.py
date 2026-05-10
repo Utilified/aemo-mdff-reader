@@ -5,7 +5,8 @@ Installed as the ``nem12-reader`` console script via the project's
 
 Usage::
 
-    nem12-reader INPUT [-o OUTPUT] [--format csv|parquet]
+    nem12-reader INPUT [-o OUTPUT] [--records intervals|accumulations]
+                                   [--format csv|parquet]
 
 If ``OUTPUT`` is omitted, results are written to stdout.
 """
@@ -17,23 +18,38 @@ import sys
 from typing import Optional, Sequence
 
 from . import __version__
-from .parser import parse, write_csv
+from .parser import (
+    parse,
+    parse_accumulations,
+    parse_accumulations_to_columns,
+    parse_to_columns,
+    write_accumulations_csv,
+    write_csv,
+)
 
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="nem12-reader",
         description=(
-            "Read an AEMO NEM12 file and emit a flat CSV (one row per interval). "
-            "Streams in O(1) memory."
+            "Read an AEMO NEM12 / NEM13 file and emit a flat CSV. Streams in O(1) memory."
         ),
     )
-    p.add_argument("input", help="Path to the NEM12 input file (CSV).")
+    p.add_argument("input", help="Path to the NEM12 / NEM13 input file (CSV).")
     p.add_argument(
         "-o",
         "--output",
         default="-",
         help="Output path. Use '-' (the default) for stdout.",
+    )
+    p.add_argument(
+        "--records",
+        choices=("intervals", "accumulations"),
+        default="intervals",
+        help=(
+            "Which record type to emit. 'intervals' = NEM12 300 records "
+            "(default), 'accumulations' = NEM13 250 records."
+        ),
     )
     p.add_argument(
         "--format",
@@ -49,30 +65,43 @@ def _build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _emit_parquet(args: argparse.Namespace) -> int:
+    try:
+        import pandas as pd
+    except ImportError:
+        print(
+            "parquet output requires pandas + pyarrow: pip install nem12-reader[parquet]",
+            file=sys.stderr,
+        )
+        return 2
+    if args.records == "accumulations":
+        df = pd.DataFrame(parse_accumulations_to_columns(args.input))
+    else:
+        df = pd.DataFrame(parse_to_columns(args.input))
+    df.to_parquet(args.output)
+    return 0
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = _build_parser().parse_args(argv)
-    readings = parse(args.input)
 
     if args.format == "parquet":
+        return _emit_parquet(args)
+
+    out_target = sys.stdout if args.output == "-" else args.output
+
+    try:
+        if args.records == "accumulations":
+            write_accumulations_csv(parse_accumulations(args.input), out_target)
+        else:
+            write_csv(parse(args.input), out_target)
+    except BrokenPipeError:
+        # Downstream consumer (e.g. ``head``) closed the pipe early —
+        # this is normal, not an error.
         try:
-            import pandas as pd  # noqa: WPS433
-        except ImportError:
-            print(
-                "parquet output requires pandas + pyarrow: "
-                "pip install nem12-reader[pandas]",
-                file=sys.stderr,
-            )
-            return 2
-        from .parser import to_columns
-
-        df = pd.DataFrame(to_columns(readings))
-        df.to_parquet(args.output)
-        return 0
-
-    if args.output == "-":
-        write_csv(readings, sys.stdout)
-    else:
-        write_csv(readings, args.output)
+            sys.stdout.flush()
+        except BrokenPipeError:
+            pass
     return 0
 
 

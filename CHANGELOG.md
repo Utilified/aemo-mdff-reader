@@ -16,26 +16,52 @@ project follows [Semantic Versioning](https://semver.org/).
   arbitrarily large files.
 - **Columnar fast path** (`parse_to_columns`, `to_dataframe(path)`):
   ~7× faster than the v1 `read_from_file` + `to_dataframe` flow.
-- **CLI** (`nem12-reader`): convert NEM12 → flat CSV / parquet from
-  the command line. Was previously documented but not implemented.
+- **Full NEM13 (250) accumulation support**: `parse_accumulations`,
+  `to_accumulations_dataframe`, `write_accumulations_csv`. `parse_all`
+  emits both NEM12 and NEM13 records in file order.
+- **CLI** (`nem12-reader`): convert NEM12 / NEM13 → flat CSV / parquet
+  from the command line. Was previously documented but not implemented.
+  `--records intervals|accumulations` selects the record type.
 
 ### Added
 
-- `nem12_reader.parse(source)` — generator-based streaming parser.
+- `nem12_reader.parse(source)` — generator-based streaming parser
+  (NEM12 300 records).
 - `nem12_reader.parse_to_columns(source)` — single-pass columnar
   parse without per-cell row-object allocation.
 - `nem12_reader.parse_header(source)` — header-only fast read.
-- `nem12_reader.write_csv(readings, output)` — flat-CSV writer that
-  works without pandas.
+- `nem12_reader.parse_accumulations(source)` — NEM13 250 record
+  streaming parser.
+- `nem12_reader.parse_accumulations_to_columns(source)` — columnar
+  NEM13 fast path.
+- `nem12_reader.parse_all(source)` — unified iterator yielding both
+  300 and 250 records in file order.
+- `nem12_reader.to_dataframe(source)` and
+  `to_accumulations_dataframe(source)` — pandas DataFrame builders.
+- `nem12_reader.write_csv(...)` and `write_accumulations_csv(...)` —
+  flat-CSV writers that work without pandas.
 - `nem12_reader.types` — slots-based `Header`, `NMIDetails`,
-  `IntervalReading`, `IntervalEvent` data classes.
-- `nem12_reader.cli.main` — `nem12-reader` console script.
+  `IntervalReading`, `IntervalEvent`, `AccumulationReading` classes.
+- `nem12_reader.cli.main` — `nem12-reader` console script with
+  `--records intervals|accumulations` and `--format csv|parquet`.
 - `pyproject.toml` (PEP 621) with full metadata, classifiers, and
-  optional extras.
+  optional extras (`pandas`, `parquet`, `mysql`, `dev`).
+- `mypy --strict` configuration; the public `nem12_reader` surface
+  is fully typed and passes `mypy --strict`.
+- `ruff` lint + format configuration.
 - `LICENSE` file (MIT).
-- `tests/` — 20-test pytest suite with sanitized fixture.
+- `tests/` — 55-test pytest suite covering parser, edge cases,
+  datetime variants, CLI, NEM13, and lazy SQL imports.
 - `benchmarks/bench_parser.py` — repeatable performance benchmark.
-- GitHub Actions CI matrix (Python 3.8 → 3.12, Linux/macOS/Windows).
+- GitHub Actions:
+  - CI matrix (Python 3.8 → 3.12, Linux/macOS/Windows).
+  - `ruff` lint job.
+  - `mypy --strict` job.
+  - Build job with `twine check --strict` and wheel-install smoke.
+  - Release workflow (`release.yml`) — publishes to PyPI on tag via
+    Trusted Publishing.
+- `dependabot.yml` — weekly bumps for GitHub Actions and pip.
+- `.pre-commit-config.yaml` — local lint + format + mypy hooks.
 
 ### Changed
 

@@ -3,22 +3,20 @@
 from __future__ import annotations
 
 import csv
-import io
 from datetime import datetime
 from pathlib import Path
 
 import pytest
 
 from nem12_reader import (
-    NEMReader,
     NEM12ParseError,
+    NEMReader,
     parse,
     parse_header,
     parse_to_columns,
     to_columns,
     write_csv,
 )
-
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_nem12.csv"
 
@@ -55,7 +53,9 @@ def test_parse_first_reading_fields():
 def test_parse_interval_window_progresses():
     readings = list(parse(FIXTURE))
     # Within a single 300 row, intervals progress by IntervalLength.
-    day1 = [r for r in readings if r.interval_date == datetime(2024, 1, 1) and r.register_id == "E1"]
+    day1 = [
+        r for r in readings if r.interval_date == datetime(2024, 1, 1) and r.register_id == "E1"
+    ]
     assert len(day1) == 48
     assert day1[0].interval_start == datetime(2024, 1, 1, 0, 0)
     assert day1[-1].interval_end == datetime(2024, 1, 2, 0, 0)
@@ -151,13 +151,61 @@ def test_nem_reader_backward_compat():
 
 
 def test_pandas_dataframe_roundtrip():
-    pd = pytest.importorskip("pandas")
-    df = NEMReader.__new__(NEMReader)  # placeholder, use API directly
+    pytest.importorskip("pandas")
     rdr = NEMReader()
     rdr.read_from_file(str(FIXTURE))
     df = rdr.to_dataframe()
     assert len(df) == 3 * 48
     assert {"NMI", "Value", "IntervalStart"}.issubset(df.columns)
+
+
+def test_header_repr():
+    h = parse_header(FIXTURE)
+    assert h is not None
+    text = repr(h)
+    assert "Header(" in text
+    assert "NEM12" in text
+
+
+def test_nem_reader_read_from_array():
+    rows = list(csv.reader(open(FIXTURE)))
+    rdr = NEMReader()
+    rdr.read_from_array(rows)
+    assert len(rdr.readings) == 3 * 48
+    assert rdr.filename is None
+
+
+def test_nem_reader_to_columns_without_filename():
+    # NEMReader.to_columns falls through the Reading-iterable branch
+    # when no source filename is buffered.
+    rows = list(csv.reader(open(FIXTURE)))
+    rdr = NEMReader()
+    rdr.read_from_array(rows)
+    cols = rdr.to_columns()
+    assert len(cols["NMI"]) == 3 * 48
+
+
+def test_nem_reader_to_csv_writes_file(tmp_path):
+    rdr = NEMReader()
+    rdr.read_from_file(str(FIXTURE))
+    out = tmp_path / "rt.csv"
+    n = rdr.to_csv(str(out))
+    assert n == 3 * 48
+    assert out.exists()
+
+
+def test_nem_reader_readings_before_load_raises():
+    rdr = NEMReader()
+    with pytest.raises(RuntimeError):
+        _ = rdr.readings
+
+
+def test_to_dataframe_from_iterable():
+    pytest.importorskip("pandas")
+    from nem12_reader import to_dataframe
+
+    df = to_dataframe(list(parse(FIXTURE)))
+    assert len(df) == 3 * 48
 
 
 def test_streaming_does_not_materialise_when_unused(tmp_path):

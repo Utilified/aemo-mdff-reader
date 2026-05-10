@@ -29,7 +29,7 @@ def _timed(label: str):
     t = time.perf_counter()
     yield lambda: time.perf_counter() - t
     elapsed = time.perf_counter() - t
-    print(f"  {label:<32} {elapsed*1000:>8.1f} ms")
+    print(f"  {label:<32} {elapsed * 1000:>8.1f} ms")
 
 
 def main() -> int:
@@ -70,8 +70,8 @@ def main() -> int:
             n += 1
         e = time.perf_counter() - t
         print(
-            f"  parse(path) -> for-loop count   {e*1000:>8.1f} ms  "
-            f"({n/e/1e6:.2f} M readings/s, {size_mb/e:.1f} MiB/s)"
+            f"  parse(path) -> for-loop count   {e * 1000:>8.1f} ms  "
+            f"({n / e / 1e6:.2f} M readings/s, {size_mb / e:.1f} MiB/s)"
         )
 
         # Buffered facade

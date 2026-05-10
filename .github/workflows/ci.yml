@@ -33,7 +33,45 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
       - name: Test
-        run: pytest -v --cov=nem12_reader --cov-report=term-missing
+        run: pytest -v --cov=nem12_reader --cov-report=term-missing --cov-report=xml
+      - name: Wheel install + import smoke
+        if: matrix.python-version == '3.12' && runner.os == 'Linux'
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --wheel
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install dist/*.whl
+          /tmp/smoke/bin/python -c "import nem12_reader; print(nem12_reader.__version__)"
+          /tmp/smoke/bin/nem12-reader --version
+
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+  typecheck:
+    name: mypy --strict
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - run: mypy
 
   build:
     name: build sdist + wheel
@@ -43,8 +81,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install --upgrade pip build
+      - run: python -m pip install --upgrade pip build twine
       - run: python -m build
+      - run: twine check --strict dist/*
       - uses: actions/upload-artifact@v4
         with:
           name: dist

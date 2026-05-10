@@ -14,9 +14,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable, List, Optional, Sequence
 
-from .parser import parse, parse_to_columns, to_columns, to_dataframe, write_csv
+from .parser import Columns, parse, to_columns, to_dataframe, write_csv
 from .types import IntervalReading
-
 
 # Kept for backward compatibility with the old INTERVAL_DATA_OUTPUT_HEADERS export.
 INTERVAL_DATA_OUTPUT_HEADERS = [
@@ -65,7 +64,7 @@ class NEMReader:
         self._source_filename = filename
         self._readings = list(parse(filename))
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> Any:
         """Materialise readings into a pandas DataFrame.
 
         Requires the ``pandas`` extra. When the buffered file path is
@@ -80,9 +79,9 @@ class NEMReader:
         """Write readings as a flat CSV file. Returns the row count."""
         return write_csv(self.readings, filename)
 
-    def to_columns(self) -> dict:
+    def to_columns(self) -> Columns:
         """Return readings as a dict of column lists (no pandas required)."""
         return to_columns(self.readings)
 
 
-__all__ = ["NEMReader", "INTERVAL_DATA_OUTPUT_HEADERS"]
+__all__ = ["INTERVAL_DATA_OUTPUT_HEADERS", "NEMReader"]

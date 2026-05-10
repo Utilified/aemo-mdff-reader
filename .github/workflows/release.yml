@@ -1,0 +1,67 @@
+name: Release
+
+# Publishes to PyPI when a version tag (vX.Y.Z) is pushed to the repo.
+#
+# Setup required (one-time, by repo admin):
+#   1. Configure Trusted Publishing on PyPI:
+#      https://docs.pypi.org/trusted-publishers/
+#      Project name: nem12-reader
+#      Owner: utilified
+#      Repository: nem12-reader
+#      Workflow: release.yml
+#      Environment: pypi
+#   2. Create a GitHub environment named "pypi" with required reviewers.
+#
+# Usage: git tag v2.0.0 && git push --tags
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+      - name: Build sdist + wheel
+        run: python -m build
+      - name: Validate distributions
+        run: twine check --strict dist/*
+      - name: Smoke-test the wheel
+        run: |
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install dist/*.whl
+          /tmp/smoke/bin/python -c "import nem12_reader as m; print(m.__version__)"
+          /tmp/smoke/bin/nem12-reader --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/nem12-reader/
+    permissions:
+      id-token: write   # for trusted publishing (no API token needed)
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

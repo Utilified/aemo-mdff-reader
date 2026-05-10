@@ -34,7 +34,7 @@ pip install nem12-reader[mysql]    # SQL persistence (Storer)
 
 ## Quick start
 
-### Streaming API (recommended)
+### Streaming API — NEM12 interval data (recommended)
 
 ```python
 from nem12_reader import parse
@@ -43,32 +43,56 @@ for reading in parse("metering.csv"):
     print(reading.nmi, reading.interval_start, reading.value, reading.uom)
 ```
 
-`parse()` returns a generator of `IntervalReading` objects. Memory is
-O(1) in file size, so you can process arbitrarily large files.
+`parse()` returns a generator of `IntervalReading` objects (one per
+interval cell of a 300 record). Memory is O(1) in file size, so you
+can process arbitrarily large files.
 
-### Bulk to a pandas DataFrame
+### Streaming API — NEM13 accumulation data
 
 ```python
-from nem12_reader import to_dataframe
+from nem12_reader import parse_accumulations
 
-df = to_dataframe("metering.csv")          # columnar fast path
-df = df[df["NMI"] == "NMI1234567"]
+for read in parse_accumulations("manual_reads.csv"):
+    print(
+        read.nmi, read.register_id,
+        read.previous_register_read, read.current_register_read,
+        read.quantity, read.uom,
+    )
 ```
 
-### Bulk to a flat CSV (no pandas required)
+`parse_accumulations()` yields `AccumulationReading` objects (one per
+NEM13 250 record). For files mixing NEM12 (300) and NEM13 (250) rows,
+use `parse_all()` which yields both record types in file order.
+
+### Bulk to pandas DataFrames
 
 ```python
-from nem12_reader import parse, write_csv
+from nem12_reader import to_dataframe, to_accumulations_dataframe
 
-write_csv(parse("metering.csv"), "out.csv")
+intervals    = to_dataframe("metering.csv")              # NEM12 300 records
+accumulations = to_accumulations_dataframe("manual.csv") # NEM13 250 records
+```
+
+Both paths use the columnar fast-path internally.
+
+### Bulk to flat CSVs (no pandas required)
+
+```python
+from nem12_reader import (
+    parse, parse_accumulations, write_csv, write_accumulations_csv,
+)
+
+write_csv(parse("metering.csv"), "intervals.csv")
+write_accumulations_csv(parse_accumulations("manual.csv"), "accumulations.csv")
 ```
 
 ### CLI
 
 ```bash
 nem12-reader metering.csv -o out.csv
-nem12-reader metering.csv > out.csv          # stdout
+nem12-reader metering.csv > out.csv                          # stdout
 nem12-reader metering.csv -o out.parquet --format parquet
+nem12-reader manual.csv --records accumulations -o acc.csv   # NEM13
 ```
 
 ### Backward-compatible facade
@@ -138,9 +162,36 @@ NEM13. Reference:
 
 - https://www.aemo.com.au/-/media/files/electricity/nem/retail_and_metering/metering-procedures/2017/mdff_specification_nem12_nem13_final_v102.pdf
 
-Supported records: `100` (header), `200` (NMI details), `300` (interval
-data), `400` (interval events), `900` (end). `500` (B2B details) rows are
-recognised and skipped by the streaming reader.
+Supported records:
+
+| Indicator | Record                  | Streaming API                       |
+| --------- | ----------------------- | ----------------------------------- |
+| `100`     | Header                  | `parse_header()`                    |
+| `200`     | NMI / channel details   | parent context for 300 / 400 rows   |
+| `250`     | NMI accumulation (NEM13)| `parse_accumulations()`             |
+| `300`     | Interval data (NEM12)   | `parse()`                           |
+| `400`     | Interval event          | currently skipped by default reader |
+| `500`     | B2B details             | currently skipped by default reader |
+| `550`     | Accumulation B2B (NEM13)| currently skipped by default reader |
+| `900`     | End of file             | terminates iteration                |
+
+`parse_all()` emits 300 and 250 records together in file order for mixed
+NEM12/NEM13 inputs.
+
+## Quality, type-checking, and CI
+
+The package ships with:
+
+- **CI matrix** across Python 3.8 → 3.12 on Linux, macOS, and Windows.
+- **`mypy --strict`** check on the public `nem12_reader` surface.
+- **`ruff`** lint + format gate.
+- **`pytest --cov`** with a 90% coverage floor (`tool.coverage.fail_under`).
+- **`twine check --strict`** plus a wheel-install + `nem12-reader --version`
+  smoke test on every PR.
+- **PyPI publish on tag** via Trusted Publishing
+  (`.github/workflows/release.yml`).
+- **Dependabot** for GitHub Actions and pip dependencies.
+- **Pre-commit** config for local development (`pre-commit install`).
 
 ## Migration from v1
 
