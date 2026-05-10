@@ -580,14 +580,14 @@ def to_dataframe(source: Union[RowSource, Iterable[IntervalReading]]) -> Any:
        hundred MiB use :func:`iter_dataframes` instead — it yields
        fixed-size DataFrame chunks and stays bounded in memory.
 
-    Requires ``pandas`` (``pip install nem12-reader[pandas]``).
+    Requires ``pandas`` (``pip install aemo-mdff-reader[pandas]``).
     """
     try:
         import pandas as pd
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "to_dataframe requires pandas. Install it with "
-            "'pip install nem12-reader[pandas]' or 'pip install pandas'."
+            "'pip install aemo-mdff-reader[pandas]' or 'pip install pandas'."
         ) from exc
 
     # Fast path: path-like or file-like — parse straight into columns.
@@ -621,7 +621,7 @@ def iter_dataframes(
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "iter_dataframes requires pandas. Install it with "
-            "'pip install nem12-reader[pandas]' or 'pip install pandas'."
+            "'pip install aemo-mdff-reader[pandas]' or 'pip install pandas'."
         ) from exc
 
     # Always go through the row-by-row generator so the function
@@ -911,14 +911,14 @@ def parse_accumulations_to_columns(source: RowSource) -> Columns:
 def to_accumulations_dataframe(source: RowSource) -> Any:
     """Build a pandas DataFrame of NEM13 250 records.
 
-    Requires ``pandas`` (``pip install nem12-reader[pandas]``).
+    Requires ``pandas`` (``pip install aemo-mdff-reader[pandas]``).
     """
     try:
         import pandas as pd
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "to_accumulations_dataframe requires pandas. Install it with "
-            "'pip install nem12-reader[pandas]' or 'pip install pandas'."
+            "'pip install aemo-mdff-reader[pandas]' or 'pip install pandas'."
         ) from exc
     return pd.DataFrame(parse_accumulations_to_columns(source))
 

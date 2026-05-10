@@ -1,13 +1,22 @@
 # Contributing
 
-Thanks for your interest in improving nem12-reader. The repository is
-small and the bar for contributions is straightforward: a pull request
-that passes CI and doesn't regress the public benchmark is welcome.
+Thanks for your interest in improving aemo-mdff-reader. The repository
+is small and the bar for contributions is straightforward: a pull
+request that passes CI and doesn't regress the public benchmark is
+welcome.
+
+Naming: the GitHub repository is `Utilified/aemo-mdff-reader`, the
+PyPI distribution is `aemo-mdff-reader`, the Python import name is
+`nem12_reader`, and the CLI is `nem12-reader`. The repo and PyPI dist
+both adopt the AEMO spec name (MDFF — Meter Data File Format, covering
+both NEM12 and NEM13); the import name and CLI are kept short for
+ergonomics. GitHub serves redirects from the previous
+`Utilified/nem12-reader` URL so existing git pins continue to work.
 
 ## Setup
 
 ```bash
-git clone https://github.com/utilified/nem12-reader.git
+git clone https://github.com/utilified/aemo-mdff-reader.git
 cd nem12-reader
 python -m venv .venv && source .venv/bin/activate
 pip install -e .[dev]
@@ -73,9 +82,9 @@ Before the first release, configure these on PyPI / GitHub:
 
 1. **PyPI Trusted Publishing**: register the project at
    https://pypi.org/manage/account/publishing/ with:
-   - PyPI project name: `nem12-reader`
+   - PyPI project name: `aemo-mdff-reader`
    - Owner: `utilified`
-   - Repository: `nem12-reader`
+   - Repository: `aemo-mdff-reader`
    - Workflow filename: `release.yml`
    - Environment name: `pypi`
 2. **GitHub Environment**: in *Settings → Environments*, create an
@@ -95,8 +104,8 @@ git push origin main vX.Y.Z
 ```
 
 The `Release` workflow takes over from here. Verify the published
-artefact at https://pypi.org/project/nem12-reader/ and the GitHub
-Release at https://github.com/utilified/nem12-reader/releases.
+artefact at https://pypi.org/project/aemo-mdff-reader/ and the
+GitHub Release at https://github.com/utilified/aemo-mdff-reader/releases.
 
 ### Local dry run
 
