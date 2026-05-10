@@ -4,6 +4,39 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] — 2026-05-10
+
+The 2.0.0 tag was cut before the project was renamed to
+`aemo-mdff-reader`. 2.0.1 is the first version published under the new
+name end-to-end. Source semantics are unchanged — this release exists
+to give consumers a single stable tag matching the
+`aemo_mdff_reader` import path and the `aemo-mdff-reader` PyPI dist
++ CLI command.
+
+### Changed
+
+- **Project renamed end-to-end** to `aemo-mdff-reader`: GitHub repo
+  `Utilified/aemo-mdff-reader`, PyPI distribution `aemo-mdff-reader`,
+  Python import `aemo_mdff_reader`, CLI command `aemo-mdff-reader`.
+  v1 callers using `from nem12_reader import …` must update their
+  imports; any references to the `nem12-reader` CLI command must be
+  updated. GitHub redirects the previous repo URL so existing git
+  pins (`git@github.com:Utilified/nem12-reader.git`) keep resolving.
+
+### Tooling
+
+- Bumped GitHub Actions used in `ci.yml` / `release.yml` to their
+  current major versions: `actions/setup-python@v6`,
+  `actions/upload-artifact@v7`, `actions/download-artifact@v8`,
+  `softprops/action-gh-release@v3` (Node 24 runtime),
+  `sigstore/gh-action-sigstore-python@v3.3.0`.
+- The release workflow's PyPI publish step is now gated on
+  `vars.PYPI_PUBLISH_ENABLED == 'true'`, so tag pushes run cleanly
+  before Trusted Publishing is configured (build + sign succeed;
+  publish + GitHub-release jobs skip).
+- Repository description, homepage, and topic tags configured for
+  PyPI / GitHub discoverability.
+
 ## [2.0.0] — 2026-05-10
 
 ### Highlights
