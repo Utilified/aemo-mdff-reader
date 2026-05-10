@@ -1,0 +1,44 @@
+name: release-please
+
+# Generates release PRs from Conventional Commits and, when those PRs are
+# merged, creates the corresponding git tag. The tag push then triggers
+# release.yml (build + sigstore + SLSA + SBOM + PyPI publish).
+#
+# Tags created via the default GITHUB_TOKEN do NOT trigger downstream
+# tag-based workflows (GitHub anti-recursion guard). To work around this
+# without introducing a long-lived PAT, we explicitly dispatch
+# release.yml after a release is created. release.yml also still listens
+# on tag push so manual tag pushes by maintainers continue to work.
+#
+# Forcing a release (e.g. for a chore-only changeset) without waiting
+# for a feat/fix commit:
+#   - Add `Release-As: x.y.z` as a commit footer, OR
+#   - Run this workflow manually via "workflow_dispatch".
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write   # to dispatch release.yml after a release is created
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger release.yml for the new tag
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.release.outputs.tag_name }}"
+          echo "Dispatching release.yml for tag: $tag"
+          gh workflow run release.yml --ref "$tag"
