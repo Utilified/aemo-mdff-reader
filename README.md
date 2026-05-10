@@ -4,6 +4,10 @@
 [![PyPI](https://img.shields.io/pypi/v/aemo-mdff-reader.svg)](https://pypi.org/project/aemo-mdff-reader/)
 [![Python versions](https://img.shields.io/pypi/pyversions/aemo-mdff-reader.svg)](https://pypi.org/project/aemo-mdff-reader/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CodeQL](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/codeql.yml/badge.svg)](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Utilified/aemo-mdff-reader/badge)](https://scorecard.dev/viewer/?uri=github.com/Utilified/aemo-mdff-reader)
+<!-- TODO: replace PROJECTID after registering at https://www.bestpractices.dev/ -->
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/PROJECTID/badge)](https://www.bestpractices.dev/projects/PROJECTID)
 
 Fast, zero-dependency streaming reader for AEMO **NEM12** and **NEM13**
 metering files. Implements AEMO MDFF (Meter Data File Format) v2.6.

@@ -5,6 +5,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    # Bundle routine action minor/patch bumps into one PR; majors stay separate for review.
+    groups:
+      actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -20,3 +28,12 @@ updates:
           - "twine"
           - "ruff"
           - "pre-commit"
+      # Bundle runtime extras (pandas/pyarrow/PyMySQL) minor/patch bumps; majors stay separate.
+      runtime-extras-minor-patch:
+        patterns:
+          - "pandas"
+          - "pyarrow"
+          - "PyMySQL"
+        update-types:
+          - "minor"
+          - "patch"
