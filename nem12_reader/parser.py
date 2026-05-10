@@ -208,15 +208,15 @@ def parse(source: RowSource) -> Iterator[IntervalReading]:
         elif record == HEADER_RECORD:
             state.header = _parse_header(row)
         elif record == EVENT_RECORD or record == B2B_RECORD:
-            # Quality/B2B detail rows attach to the most recent 300 row.
-            # We don't currently surface them through the streaming reader;
-            # see ``parse_with_events`` for that.
+            # 400 quality / 500 B2B rows attach to the most recent 300
+            # row. The default streaming reader skips them — call
+            # ``parse_events`` or ``parse_b2b`` to surface them.
             continue
         elif record == END_RECORD:
             return
-        # Unknown record indicators (e.g. enem12 600/610/700, nem13 250/550)
-        # are ignored by the default streaming reader. Use ``parse_records``
-        # for a less filtered view.
+        # Unknown record indicators (250, 550, enem12 600/610/700, ...)
+        # are ignored here. Use ``parse_accumulations`` for 250 records,
+        # ``parse_b2b`` for 500/550, or ``parse_all`` for 300+250 mixed.
 
 
 def parse_header(source: RowSource) -> Optional[Header]:
@@ -668,10 +668,12 @@ def parse_accumulations(source: RowSource) -> Iterator[AccumulationReading]:
 def parse_all(
     source: RowSource,
 ) -> Iterator[Union[IntervalReading, AccumulationReading]]:
-    """Yield both NEM12 interval readings and NEM13 accumulations.
+    """Yield NEM12 300 interval readings and NEM13 250 accumulation
+    records together, in file order.
 
-    Records are emitted in file order, so a single pass over a mixed
-    NEM12/NEM13 file produces all data without re-reading the source.
+    Use this for files that interleave 300 and 250 rows. Other record
+    types are not surfaced — call :func:`parse_events` for 400 quality
+    flags or :func:`parse_b2b` for 500 / 550 transactions.
     """
     state = _ParserState()
     nmi_obj: Optional[NMIDetails] = None
