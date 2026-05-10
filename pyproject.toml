@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 # Pillow / PIL precedent (``pip install Pillow`` → ``import PIL``)
 # applies here.
 name = "aemo-mdff-reader"
-version = "2.0.1"
+version = "2.0.2"
 description = "Fast streaming reader for AEMO MDFF NEM12 / NEM13 metering files. Zero required dependencies."
 readme = "README.md"
 license = "MIT"

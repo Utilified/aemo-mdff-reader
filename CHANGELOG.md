@@ -6,6 +6,12 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.2] — 2026-05-10
+
+First release published to PyPI via Trusted Publishing from the now-public
+GitHub repository. No source or behavioural changes versus 2.0.1 — this
+release packages the public-launch hardening described below.
+
 ### Added
 
 - `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1 adoption notice).
