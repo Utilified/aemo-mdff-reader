@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/aemo-mdff-reader.svg)](https://pypi.org/project/aemo-mdff-reader/)
-[![Python versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://pypi.org/project/aemo-mdff-reader/)
+[![Python versions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://pypi.org/project/aemo-mdff-reader/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CodeQL](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/codeql.yml/badge.svg)](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Utilified/aemo-mdff-reader/badge)](https://scorecard.dev/viewer/?uri=github.com/Utilified/aemo-mdff-reader)
@@ -192,7 +192,7 @@ pip install -e .[dev]
 pytest
 ```
 
-CI runs ruff, mypy --strict, the test matrix on Python 3.10 → 3.12 /
+CI runs ruff, mypy --strict, the test matrix on Python 3.11 → 3.12 /
 Linux / macOS / Windows, `pip-audit`, `bandit`, CodeQL, OpenSSF
 Scorecard, and a wheel-install smoke test.
 
