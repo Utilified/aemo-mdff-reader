@@ -5,257 +5,101 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/nem12-reader.svg)](https://pypi.org/project/nem12-reader/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A fast, **zero-dependency** streaming reader for AEMO NEM12 / NEM13 metering
-files. Designed for retailers, distributors, and analysts working with
-Australian energy interval data.
+Fast, zero-dependency streaming reader for AEMO **NEM12** and **NEM13**
+metering files.
 
-- **Streaming** — O(1) memory; iterate through millions of intervals without
-  loading the file into RAM.
-- **Zero required dependencies** — pure stdlib (`csv`, `datetime`).
-  pandas / PyMySQL are opt-in extras.
-- **Fast** — ~2 M interval readings/sec on the columnar fast path; ~7×
-  faster than the previous tree-based implementation.
-- **Typed** — slots-based data classes with type hints throughout.
-- **CLI included** — convert NEM12 to flat CSV in one command.
+- O(1) memory — iterate through millions of intervals.
+- Pure stdlib core; pandas / PyMySQL are opt-in extras.
+- ~2 M readings/sec on the columnar fast path.
+- Includes a `nem12-reader` CLI.
 
-## Installation
+## Install
 
 ```bash
 pip install nem12-reader
+
+# optional extras
+pip install nem12-reader[pandas]   # to_dataframe() / parquet
+pip install nem12-reader[mysql]    # SQL persistence
 ```
 
-Optional extras:
-
-```bash
-pip install nem12-reader[pandas]   # for to_dataframe() / parquet output
-pip install nem12-reader[parquet]  # pandas + pyarrow
-pip install nem12-reader[mysql]    # SQL persistence (Storer)
-```
-
-## Quick start
-
-### Streaming API — NEM12 interval data (recommended)
+## Use
 
 ```python
 from nem12_reader import parse
 
-for reading in parse("metering.csv"):
-    print(reading.nmi, reading.interval_start, reading.value, reading.uom)
+for r in parse("metering.csv"):
+    print(r.nmi, r.interval_start, r.value, r.uom)
 ```
 
-`parse()` returns a generator of `IntervalReading` objects (one per
-interval cell of a 300 record). Memory is O(1) in file size, so you
-can process arbitrarily large files.
-
-### Streaming API — NEM13 accumulation data
+Or as a flat CSV / DataFrame:
 
 ```python
-from nem12_reader import parse_accumulations
+from nem12_reader import parse, write_csv, to_dataframe
 
-for read in parse_accumulations("manual_reads.csv"):
-    print(
-        read.nmi, read.register_id,
-        read.previous_register_read, read.current_register_read,
-        read.quantity, read.uom,
-    )
+write_csv(parse("metering.csv"), "out.csv")     # no pandas
+df = to_dataframe("metering.csv")                # needs [pandas]
 ```
 
-`parse_accumulations()` yields `AccumulationReading` objects (one per
-NEM13 250 record). For files mixing NEM12 (300) and NEM13 (250) rows,
-use `parse_all()` which yields both record types in file order.
-
-### Bulk to pandas DataFrames
-
-```python
-from nem12_reader import to_dataframe, to_accumulations_dataframe
-
-intervals    = to_dataframe("metering.csv")              # NEM12 300 records
-accumulations = to_accumulations_dataframe("manual.csv") # NEM13 250 records
-```
-
-Both paths use the columnar fast-path internally.
-
-### Bulk to flat CSVs (no pandas required)
-
-```python
-from nem12_reader import (
-    parse, parse_accumulations, write_csv, write_accumulations_csv,
-)
-
-write_csv(parse("metering.csv"), "intervals.csv")
-write_accumulations_csv(parse_accumulations("manual.csv"), "accumulations.csv")
-```
-
-### Quality / event flags (400 records)
-
-```python
-from nem12_reader import parse_events
-
-for evt in parse_events("metering.csv"):
-    print(evt.nmi, evt.interval_date, evt.start_interval,
-          evt.end_interval, evt.quality_method)
-```
-
-### B2B transaction details (500 / 550 records)
-
-```python
-from nem12_reader import parse_b2b
-
-for b in parse_b2b("metering.csv"):
-    if b.record_kind == "500":
-        print(b.trans_code, b.ret_service_order, b.read_datetime)
-    else:  # "550" (NEM13)
-        print(b.previous_trans_code, b.current_trans_code)
-```
-
-### Validation
-
-```python
-from nem12_reader import nmi_checksum, validate_nmi, validate_file
-
-nmi_checksum("NMI1234567")          # -> int (0-9), AEMO NMI checksum digit
-validate_nmi("NMI1234567")          # -> True (structural check)
-validate_nmi("NMI1234567", "2")     # -> True if "2" matches the checksum
-
-issues = validate_file("metering.csv")  # list[str], empty if file is valid
-```
-
-### CLI
+From the command line:
 
 ```bash
 nem12-reader metering.csv -o out.csv
-nem12-reader metering.csv > out.csv                          # stdout
-nem12-reader metering.csv -o out.parquet --format parquet
-nem12-reader manual.csv --records accumulations -o acc.csv   # NEM13
-nem12-reader metering.csv --validate                         # spec check
+nem12-reader metering.csv --validate            # spec check
+nem12-reader manual.csv --records accumulations # NEM13
 ```
 
-### Backward-compatible facade
+## API at a glance
 
-If you depend on the v1 API:
+| You want                              | Call                          |
+| ------------------------------------- | ----------------------------- |
+| 300 interval readings (NEM12)         | `parse(src)`                  |
+| 250 accumulations (NEM13)             | `parse_accumulations(src)`    |
+| Both, in file order                   | `parse_all(src)`              |
+| 400 quality / event flags             | `parse_events(src)`           |
+| 500 / 550 B2B transactions            | `parse_b2b(src)`              |
+| Just the 100 header                   | `parse_header(src)`           |
+| Build a pandas DataFrame              | `to_dataframe(src)`           |
+| Write a flat CSV (no pandas)          | `write_csv(rows, out)`        |
+| Validate against AEMO MDFF v1.02      | `validate_file(src)`          |
+| Compute / verify an NMI checksum      | `nmi_checksum`, `validate_nmi`|
 
-```python
-from nem12_reader import NEMReader
+`src` can be a path, a file-like object, an iterable of CSV lines, or
+an iterable of pre-split rows. The v1 `NEMReader` facade
+(`read_from_file`, `to_dataframe`, `to_csv`) still works.
 
-reader = NEMReader()
-reader.read_from_file("metering.csv")
-df = reader.to_dataframe()
-reader.to_csv("out.csv")
-```
+Each `parse(...)` yields an `IntervalReading` with `nmi`,
+`meter_serial_number`, `register_id`, `nmi_suffix`, `uom`,
+`interval_length`, `interval_date`, `interval_start`, `interval_end`,
+`interval_index`, `value`, `quality_method`, `reason_code`,
+`reason_description`, `update_datetime`, `msats_load_datetime`. See
+the type stubs (`from nem12_reader import IntervalReading`) for the
+exact signatures.
 
-## Output schema
+## Notes
 
-Each `IntervalReading` corresponds to a single interval cell within a 300
-record:
-
-| Field                 | Type             | Description                          |
-| --------------------- | ---------------- | ------------------------------------ |
-| `nmi`                 | str              | National Metering Identifier         |
-| `meter_serial_number` | str              | Meter serial                         |
-| `register_id`         | str              | Register / channel ID                |
-| `nmi_suffix`          | str              | NMI suffix                           |
-| `uom`                 | str              | Unit of measure (e.g. KWH, KVARH)    |
-| `interval_length`     | int              | Interval length in minutes           |
-| `interval_date`       | datetime         | Date of the 300 row                  |
-| `interval_start`      | datetime         | Start of the interval                |
-| `interval_end`        | datetime         | End of the interval                  |
-| `interval_index`      | int              | 1-based index within the day         |
-| `value`               | float            | Reading                              |
-| `quality_method`      | str              | Quality flag (A, S, F, V, N, E)      |
-| `reason_code`         | int \| None      | Reason code, if provided             |
-| `reason_description`  | str              | Free-text description                |
-| `update_datetime`     | datetime \| None | Update datetime                      |
-| `msats_load_datetime` | datetime \| None | MSATS load datetime                  |
+- **Spec**: AEMO MDFF v1.02 (NEM12 / NEM13). Records `100`, `200`,
+  `250`, `300`, `400`, `500`, `550`, `900` are all surfaced; unknown
+  indicators are ignored.
+- **Tolerant**: UTF-8 BOM is consumed silently, LF and CRLF both work,
+  and empty interval cells are coerced to `0.0` (use `quality_method`
+  to distinguish missing from zero).
+- **Migration from v1**: `NEMReader` still works. The internal
+  `nem12_reader.nemstructure` package is gone — see the API table
+  above. `pandas` is now opt-in. See `CHANGELOG.md` for details.
 
 ## Performance
 
-Single-thread, Python 3.11, 4 NMIs × 365 days × 5-minute intervals
-(420,480 readings, 2.8 MiB CSV):
+420,480 readings (4 NMIs × 365 days × 5-min, 2.8 MiB CSV), Python 3.11:
 
-| Operation                                  |    Time | Throughput        |
-| ------------------------------------------ | ------: | ----------------- |
-| `for r in parse(path): ...` (streaming)    | ~0.45 s | 0.9 M readings/s  |
-| `parse_to_columns(path)` (fast path)       | ~0.21 s | 2.0 M readings/s  |
-| `to_dataframe(path)` (pandas, fast path)   | ~0.76 s |                   |
-| _v1 `NEMReader().read_from_file()`_        | _~0.74 s_ | _baseline_      |
-| _v1 `read_from_file()` + `to_dataframe()`_ | _~2.03 s_ | _baseline_      |
+| Operation                          | Time   |
+| ---------------------------------- | -----: |
+| `for r in parse(path): ...`        | 0.45 s |
+| `parse_to_columns(path)`           | 0.21 s |
+| `to_dataframe(path)` (pandas)      | 0.76 s |
 
-End-to-end **~2.7× faster** with **O(1) memory** and **zero required
-dependencies** (was: pandas, numpy, PyMySQL, wrapt, six, tomli, pytz,
-python-dateutil — all required by v1).
-
-Run the bench yourself:
-
-```bash
-python benchmarks/bench_parser.py --nmis 4 --days 365 --interval-minutes 5
-```
-
-## Specification
-
-Implements AEMO Meter Data File Format (MDFF) Specification — NEM12 and
-NEM13. Reference:
-
-- https://www.aemo.com.au/-/media/files/electricity/nem/retail_and_metering/metering-procedures/2017/mdff_specification_nem12_nem13_final_v102.pdf
-
-Supported records:
-
-| Indicator | Record                   | Streaming API                                      |
-| --------- | ------------------------ | -------------------------------------------------- |
-| `100`     | Header                   | `parse_header()`                                   |
-| `200`     | NMI / channel details    | parent context for 300 / 400 rows                  |
-| `250`     | NMI accumulation (NEM13) | `parse_accumulations()`                            |
-| `300`     | Interval data (NEM12)    | `parse()`                                          |
-| `400`     | Interval event           | `parse_events()` → `IntervalEvent`                 |
-| `500`     | B2B details              | `parse_b2b()` → `B2BDetails(record_kind="500")`    |
-| `550`     | Accumulation B2B (NEM13) | `parse_b2b()` → `B2BDetails(record_kind="550")`    |
-| `900`     | End of file              | terminates iteration                               |
-
-`parse_all()` emits 300 and 250 records together in file order for mixed
-NEM12/NEM13 inputs. Use `validate_file()` for a fast structural
-conformance check (presence of 100/900, 300 rows under a 200, NMI
-structural validity, 250 row field count).
-
-## Quality, type-checking, and CI
-
-The package ships with:
-
-- **CI matrix** across Python 3.8 → 3.12 on Linux, macOS, and Windows.
-- **`mypy --strict`** check on the public `nem12_reader` surface.
-- **`ruff`** lint + format gate.
-- **`pytest --cov`** with a 90% coverage floor (`tool.coverage.fail_under`).
-- **`twine check --strict`** plus a wheel-install + `nem12-reader --version`
-  smoke test on every PR.
-- **`pip-audit`** for dependency CVEs and **`bandit`** for static
-  security analysis on every PR.
-- **PyPI publish on tag** via Trusted Publishing, with **sigstore**
-  signatures attached to the GitHub Release
-  (`.github/workflows/release.yml`).
-- **Dependabot** for GitHub Actions and pip dependencies.
-- **Pre-commit** config for local development (`pre-commit install`).
-
-## Migration from v1
-
-`NEMReader` still works (`read_from_file`, `to_dataframe`, `to_csv`,
-`INTERVAL_DATA_OUTPUT_HEADERS`). The internal `nem12_reader.nemstructure`
-package is gone — see the public API above. `pandas` is now opt-in
-(`pip install nem12-reader[pandas]`); the DataFrame schema gains
-explicit `IntervalStart` / `IntervalEnd` columns. See `CHANGELOG.md`
-for the full list.
-
-## File-format tolerance
-
-The parser handles a few real-world quirks transparently:
-
-- **UTF-8 BOM** (`﻿`) at the start of a file is consumed silently
-  (path inputs are opened with `utf-8-sig`).
-- **CRLF and LF** line endings both work via `csv.reader(newline="")`.
-- Empty interval cells in a 300 row are treated as `0.0`; the
-  `quality_method` flag (e.g. `"S"`, `"F"`, `"N"`) distinguishes a
-  real zero from a missing reading.
-- Trailing optional columns on a 300 row may be omitted; the parser
-  will not raise.
-- Files containing record types we do not currently surface (e.g.
-  the `enem12` 600/610/700 family) are skipped without error.
+~2.7× faster than v1 end-to-end; reproduce with
+`python benchmarks/bench_parser.py`.
 
 ## Development
 
@@ -265,6 +109,11 @@ cd nem12-reader
 pip install -e .[dev]
 pytest
 ```
+
+CI runs ruff, mypy --strict, the test matrix on Python 3.8 → 3.12 /
+Linux / macOS / Windows, `pip-audit`, `bandit`, and a wheel-install
+smoke test. Releases are signed with sigstore and published to PyPI
+via Trusted Publishing on tag.
 
 ## License
 
