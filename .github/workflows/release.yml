@@ -65,7 +65,7 @@ jobs:
           name: dist
           path: dist/
       - name: Sign distributions with sigstore
-        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        uses: sigstore/gh-action-sigstore-python@v3.3.0
         with:
           inputs: ./dist/*.tar.gz ./dist/*.whl
       - name: Stage signatures for the GitHub Release, then remove from dist
