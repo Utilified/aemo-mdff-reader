@@ -65,7 +65,7 @@ aemo-mdff-reader = "aemo_mdff_reader.cli:main"
 Homepage = "https://github.com/utilified/aemo-mdff-reader"
 Repository = "https://github.com/utilified/aemo-mdff-reader"
 Issues = "https://github.com/utilified/aemo-mdff-reader/issues"
-Changelog = "https://github.com/utilified/aemo-mdff-reader/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/utilified/aemo-mdff-reader/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["aemo_mdff_reader*"]
