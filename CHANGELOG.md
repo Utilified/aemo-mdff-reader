@@ -4,6 +4,19 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.4](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.3...v2.0.4) (2026-05-10)
+
+First release published to PyPI after the supply-chain hardening landed
+in v2.0.3 — which itself failed to publish due to two release-pipeline
+bugs (see notice on the v2.0.3 GitHub Release). PyPI users upgrading
+from 2.0.2 receive **both** the v2.0.3 hardening (SLSA build provenance,
+CycloneDX SBOM, release-please automation, dependabot grouping) and the
+fixes below in one upgrade. No source or behavioural changes versus 2.0.2.
+
+### Bug Fixes
+
+* release-please dispatch + SBOM directory creation ([#17](https://github.com/Utilified/aemo-mdff-reader/issues/17)) ([8e3cd13](https://github.com/Utilified/aemo-mdff-reader/commit/8e3cd13ca11bad3399efd2e5fd2fe5ae6bcb2a90))
+
 ## [2.0.3](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.2...v2.0.3) (2026-05-10)
 
 Supply-chain hardening and release-process automation. No source or
