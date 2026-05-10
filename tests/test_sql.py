@@ -43,7 +43,7 @@ def test_storer_attribute_lazy_loads():
     # If pymysql is not installed, accessing Storer should raise ImportError
     # only at access time, not at module import time.
     pytest.importorskip("aemo_mdff_reader.sql")
-    import aemo_mdff_reader.sql as sql_mod
+    from aemo_mdff_reader import sql as sql_mod
 
     if "pymysql" in sys.modules:
         # If pymysql is available in the test env, we can at least confirm

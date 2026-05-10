@@ -127,7 +127,8 @@ def test_parse_to_columns_matches_to_columns():
 
 
 def test_parse_to_columns_from_iterable():
-    rows = list(csv.reader(open(FIXTURE)))
+    with open(FIXTURE) as f:
+        rows = list(csv.reader(f))
     a = parse_to_columns(FIXTURE)
     b = parse_to_columns(rows)
     assert a == b
@@ -178,7 +179,8 @@ def test_header_repr():
 
 
 def test_nem_reader_read_from_array():
-    rows = list(csv.reader(open(FIXTURE)))
+    with open(FIXTURE) as f:
+        rows = list(csv.reader(f))
     rdr = NEMReader()
     rdr.read_from_array(rows)
     assert len(rdr.readings) == 3 * 48
@@ -188,7 +190,8 @@ def test_nem_reader_read_from_array():
 def test_nem_reader_to_columns_without_filename():
     # NEMReader.to_columns falls through the Reading-iterable branch
     # when no source filename is buffered.
-    rows = list(csv.reader(open(FIXTURE)))
+    with open(FIXTURE) as f:
+        rows = list(csv.reader(f))
     rdr = NEMReader()
     rdr.read_from_array(rows)
     cols = rdr.to_columns()

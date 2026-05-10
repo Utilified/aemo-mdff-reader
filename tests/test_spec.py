@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import aemo_mdff_reader
-from aemo_mdff_reader import spec
+
+spec = aemo_mdff_reader.spec
 
 
 def test_spec_module_is_re_exported():

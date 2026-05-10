@@ -10,8 +10,6 @@ from __future__ import annotations
 import sys
 from datetime import date
 
-import pandas as pd  # noqa: F401  — fails fast if not installed
-
 from aemo_mdff_reader import parse, to_dataframe
 
 

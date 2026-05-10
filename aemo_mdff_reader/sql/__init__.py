@@ -7,7 +7,13 @@ The dependency is only required when you actually instantiate
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .query import COLUMNS, QueryBuilder
+
+if TYPE_CHECKING:
+    # Visible to static analysers / IDEs without forcing pymysql to load.
+    from .store import DBCredentials, Storer
 
 __all__ = ["COLUMNS", "DBCredentials", "QueryBuilder", "Storer"]
 

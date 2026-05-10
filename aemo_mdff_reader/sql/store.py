@@ -4,7 +4,15 @@
 
 import pymysql.cursors
 
-from .query import *
+from .query import (
+    CHANNEL_TABLE,
+    IMPORT_TABLE,
+    INTERVAL_DATA_TABLE,
+    INTERVAL_TABLE,
+    INTERVAL_TYPE_TABLE,
+    NMI_TABLE,
+    QueryBuilder,
+)
 
 # Load queries once session is imported
 QUERY_FOLDER = "queries"
@@ -128,11 +136,11 @@ class Storer:
 
                     data_intervals.append(data_interval)
             query = QueryBuilder.insert_query(NMI_TABLE, data_nmi)
-            resultset = cursor.execute(query)
+            cursor.execute(query)
 
             for row in range(len(data_channel)):
                 query = QueryBuilder.insert_query(CHANNEL_TABLE, [data_channel[row]])
-                resultset = cursor.execute(query)
+                cursor.execute(query)
                 query = "SELECT channelID FROM `nem`.`channel` WHERE `NMI` = %s AND `NMISuffix` = %s AND `MeterSerialNumber` = %s"
                 cursor.execute(
                     query, (data_channel[row][0], data_channel[row][2], data_channel[row][4])
