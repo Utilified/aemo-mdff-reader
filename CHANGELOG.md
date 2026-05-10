@@ -6,6 +6,12 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [2.0.4](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.3...v2.0.4) (2026-05-10)
 
+First release published to PyPI after the supply-chain hardening landed
+in v2.0.3 — which itself failed to publish due to two release-pipeline
+bugs (see notice on the v2.0.3 GitHub Release). PyPI users upgrading
+from 2.0.2 receive **both** the v2.0.3 hardening (SLSA build provenance,
+CycloneDX SBOM, release-please automation, dependabot grouping) and the
+fixes below in one upgrade. No source or behavioural changes versus 2.0.2.
 
 ### Bug Fixes
 
