@@ -33,10 +33,10 @@ INTERVAL_DATA_OUTPUT_HEADERS = [
 
 
 class NEMReader:
-    """Reads NEM12 files using the AEMO MDFF specification.
+    """Reads NEM12 / NEM13 files using the AEMO MDFF specification (v2.6).
 
-    Reference:
-    https://www.aemo.com.au/-/media/files/electricity/nem/retail_and_metering/metering-procedures/2017/mdff_specification_nem12_nem13_final_v102.pdf
+    See :mod:`nem12_reader.spec` for the spec version, effective date,
+    and the allowed-value enumerations referenced in the spec.
     """
 
     INTERVAL_DATA_OUTPUT_HEADERS = INTERVAL_DATA_OUTPUT_HEADERS

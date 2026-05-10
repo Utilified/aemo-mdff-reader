@@ -8,10 +8,15 @@ Recommended entry points:
 
 Each iterator is lazy (O(1) memory). For pandas DataFrames, see
 :func:`to_dataframe` (NEM12) and :func:`to_accumulations_dataframe` (NEM13).
+
+Spec compatibility: AEMO MDFF v2.6 (effective 29 September 2024). The
+allowed-value tables — quality flags, transaction codes, reason codes,
+units of measure — are exposed as constants in :mod:`nem12_reader.spec`.
 """
 
 from __future__ import annotations
 
+from . import spec
 from .parser import (
     NEM12ParseError,
     nmi_checksum,
@@ -63,6 +68,7 @@ __all__ = [
     "parse_events",
     "parse_header",
     "parse_to_columns",
+    "spec",
     "to_accumulations_dataframe",
     "to_columns",
     "to_dataframe",

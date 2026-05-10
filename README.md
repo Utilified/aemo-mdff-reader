@@ -61,7 +61,7 @@ nem12-reader manual.csv --records accumulations # NEM13
 | Just the 100 header                   | `parse_header(src)`           |
 | Build a pandas DataFrame              | `to_dataframe(src)`           |
 | Write a flat CSV (no pandas)          | `write_csv(rows, out)`        |
-| Validate against AEMO MDFF v1.02      | `validate_file(src)`          |
+| Validate against AEMO MDFF v2.6       | `validate_file(src)`          |
 | Compute / verify an NMI checksum      | `nmi_checksum`, `validate_nmi`|
 
 `src` can be a path, a file-like object, an iterable of CSV lines, or
@@ -78,12 +78,18 @@ exact signatures.
 
 ## Notes
 
-- **Spec**: AEMO MDFF v1.02 (NEM12 / NEM13). Records `100`, `200`,
-  `250`, `300`, `400`, `500`, `550`, `900` are all surfaced; unknown
-  indicators are ignored.
+- **Spec**: AEMO Meter Data File Format Specification NEM12 & NEM13,
+  **v2.6** (effective 29 September 2024). Records `100`, `200`, `250`,
+  `300`, `400`, `500`, `550`, `900` are all surfaced; unknown indicators
+  are ignored. Allowed values for quality flags, transaction codes,
+  reason codes, units of measure, and direction indicators are exposed
+  as constants in `nem12_reader.spec` for callers that want stricter
+  validation than the parser performs.
 - **Tolerant**: UTF-8 BOM is consumed silently, LF and CRLF both work,
   and empty interval cells are coerced to `0.0` (use `quality_method`
-  to distinguish missing from zero).
+  to distinguish missing from zero). The parser also accepts non-spec
+  IntervalLengths (1, 60, etc.); strict callers should compare against
+  `spec.ALLOWED_INTERVAL_LENGTHS` (= `{5, 15, 30}`).
 - **Migration from v1**: `NEMReader` still works. The internal
   `nem12_reader.nemstructure` package is gone — see the API table
   above. `pandas` is now opt-in. See `CHANGELOG.md` for details.

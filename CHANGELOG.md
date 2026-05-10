@@ -8,6 +8,13 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ### Highlights
 
+- **Spec target: AEMO MDFF v2.6** (effective 29 September 2024).
+  Previous v1.x of this package targeted MDFF v1.02 (2017). All
+  record-type schemas, allowed values, and reason-code descriptions
+  are aligned to v2.6 — including the v2.6 reason codes added by the
+  ICF_054 substitution-type review (codes 100–109) and the v2.6
+  designation of obsolete reason codes (Appendix F). The full set is
+  exposed as constants in the new `nem12_reader.spec` module.
 - **Zero required dependencies**: pandas, PyMySQL, wrapt, six, tomli,
   pytz, python-dateutil are no longer required. pandas / PyMySQL are
   available as opt-in extras (`pip install nem12-reader[pandas]`,

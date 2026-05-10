@@ -1,11 +1,13 @@
-"""Streaming NEM12 parser.
+"""Streaming NEM12 / NEM13 parser.
 
-This module parses NEM12 (and the structurally similar NEM13) files
-defined in the AEMO MDFF specification. It is a single-pass, allocation-
-light implementation that yields :class:`IntervalReading` objects without
-constructing an intermediate parse tree.
+This module parses NEM12 and the structurally similar NEM13 files
+defined by AEMO. It is a single-pass, allocation-light implementation
+that yields :class:`IntervalReading` (300) and :class:`AccumulationReading`
+(250) records without constructing an intermediate parse tree.
 
-Reference: AEMO Meter Data File Format (MDFF) v1.02 — NEM12/NEM13.
+Spec target: AEMO Meter Data File Format Specification NEM12 & NEM13,
+v2.6, effective 29 September 2024. Allowed-value enumerations are
+exposed via :mod:`nem12_reader.spec`.
 """
 
 from __future__ import annotations
@@ -34,7 +36,7 @@ B2B_RECORD = "500"
 ACCUMULATION_B2B_RECORD = "550"
 END_RECORD = "900"
 
-# Field counts per AEMO MDFF v1.02 (NEM12 / NEM13).
+# Field counts per AEMO MDFF v2.6 (NEM12 / NEM13).
 ACCUMULATION_FIELDS = 23  # 250 record
 
 MINUTES_PER_DAY = 24 * 60
@@ -242,7 +244,12 @@ def _parse_header(row: Sequence[str]) -> Header:
 def _parse_nmi(row: Sequence[str]) -> NMIDetails:
     # 200, NMI, NMIConfiguration, RegisterID, NMISuffix,
     # MDMDataStreamIdentifier, MeterSerialNumber, UOM, IntervalLength,
-    # NextScheduledReadDate
+    # NextScheduledReadDate (per AEMO MDFF v2.6 §4.3).
+    #
+    # IntervalLength: the spec restricts this to 5, 15, or 30 minutes. We
+    # accept any divisor of 1440 for tolerance with non-conforming files;
+    # callers wanting strict validation can compare against
+    # ``nem12_reader.spec.ALLOWED_INTERVAL_LENGTHS``.
     if len(row) < 9:
         raise NEM12ParseError("200 NMI row missing required fields")
     try:
@@ -600,7 +607,7 @@ def write_csv(readings: Iterable[IntervalReading], output: Union[PathLike, IO[st
 def _parse_accumulation(row: Sequence[str]) -> AccumulationReading:
     """Parse a single 250 (NEM13) accumulation row.
 
-    Field order follows the AEMO MDFF v1.02 NEM13 specification:
+    Field order follows AEMO MDFF v2.6 §5.3 (NEM13):
 
       1. RecordIndicator (250)
       2. NMI                              13. PreviousReasonDescription
@@ -880,7 +887,7 @@ def _parse_interval_event(
 ) -> IntervalEvent:
     """Parse a single 400 (Interval Event) row.
 
-    Field order per AEMO MDFF v1.02:
+    Field order per AEMO MDFF v2.6 §4.5:
         1. RecordIndicator (400)
         2. StartInterval                4. QualityMethod
         3. EndInterval                  5. ReasonCode
