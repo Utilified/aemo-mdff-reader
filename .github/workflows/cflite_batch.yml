@@ -1,0 +1,39 @@
+name: ClusterFuzzLite scheduled batch fuzz
+
+# Longer scheduled fuzz session that grows the persistent corpus and
+# crash storage in the gh-pages branch. Runs each sanitizer in turn
+# for ``fuzz-seconds``. Storage requires a ``gh-pages`` branch; the
+# action creates it on first run.
+
+on:
+  schedule:
+    # Sundays at 02:00 UTC — quiet window, off-cycle from CodeQL/Scorecard.
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  batch-fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      # cflite needs write access to gh-pages for corpus + crash storage.
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined]
+    steps:
+      - name: Build fuzzers (${{ matrix.sanitizer }})
+        uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
+        with:
+          language: python
+          sanitizer: ${{ matrix.sanitizer }}
+      - name: Run fuzzers (${{ matrix.sanitizer }})
+        uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
+        with:
+          language: python
+          fuzz-seconds: 1800
+          mode: batch
+          sanitizer: ${{ matrix.sanitizer }}
