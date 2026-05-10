@@ -1,4 +1,4 @@
-"""Tests for the ``nem12-reader`` CLI."""
+"""Tests for the ``aemo-mdff-reader`` CLI."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from nem12_reader.cli import main
+from aemo_mdff_reader.cli import main
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_nem12.csv"
 
@@ -47,7 +47,7 @@ def test_cli_version_flag(capsys):
         main(["--version"])
     assert exc.value.code == 0
     out = capsys.readouterr().out
-    assert "nem12-reader" in out
+    assert "aemo-mdff-reader" in out
 
 
 def test_cli_parquet_output(tmp_path):

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from nem12_reader import (
+from aemo_mdff_reader import (
     NEM12ParseError,
     NEMReader,
     parse,
@@ -212,7 +212,7 @@ def test_nem_reader_readings_before_load_raises():
 
 def test_to_dataframe_from_iterable():
     pytest.importorskip("pandas")
-    from nem12_reader import to_dataframe
+    from aemo_mdff_reader import to_dataframe
 
     df = to_dataframe(list(parse(FIXTURE)))
     assert len(df) == 3 * 48

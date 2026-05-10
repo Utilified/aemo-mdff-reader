@@ -21,7 +21,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from nem12_reader import NEMReader, parse, parse_to_columns, to_columns
+from aemo_mdff_reader import NEMReader, parse, parse_to_columns, to_columns
 
 
 @contextmanager
@@ -95,7 +95,7 @@ def main() -> int:
             import pandas as pd  # noqa: F401
 
             with _timed("to_dataframe(path) [fast path]") as _:
-                from nem12_reader import to_dataframe
+                from aemo_mdff_reader import to_dataframe
 
                 df = to_dataframe(path)
             assert len(df) == total_readings

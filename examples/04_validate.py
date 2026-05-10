@@ -1,6 +1,6 @@
 """Run structural validation against a NEM12 / NEM13 file.
 
-Equivalent to ``nem12-reader path/to/file.csv --validate`` but shown
+Equivalent to ``aemo-mdff-reader path/to/file.csv --validate`` but shown
 here as a programmatic example for callers that want to fold spec
 checks into a larger pipeline.
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 
-from nem12_reader import spec, validate_file
+from aemo_mdff_reader import spec, validate_file
 
 
 def main(path: str) -> int:

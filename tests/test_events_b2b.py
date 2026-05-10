@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from nem12_reader import (
+from aemo_mdff_reader import (
     B2BDetails,
     IntervalEvent,
     NEM12ParseError,

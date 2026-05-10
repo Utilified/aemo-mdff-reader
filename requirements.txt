@@ -1,5 +1,5 @@
 # aemo-mdff-reader has no required runtime dependencies.
-# (The Python import name is ``nem12_reader``.)
+# (The Python import name is ``aemo_mdff_reader``.)
 #
 # Optional features can be enabled via extras:
 #   pip install aemo-mdff-reader[pandas]   # to_dataframe(), parquet output

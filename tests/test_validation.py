@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from nem12_reader import nmi_checksum, validate_file, validate_nmi
+from aemo_mdff_reader import nmi_checksum, validate_file, validate_nmi
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_nem12.csv"
 NEM13_FIXTURE = Path(__file__).parent / "fixtures" / "sample_nem13.csv"
@@ -109,7 +109,7 @@ def test_validate_file_invalid_nmi_structure():
 
 
 def test_cli_validate_clean_file_returns_zero(capsys):
-    from nem12_reader.cli import main
+    from aemo_mdff_reader.cli import main
 
     rc = main([str(FIXTURE), "--validate"])
     assert rc == 0
@@ -118,7 +118,7 @@ def test_cli_validate_clean_file_returns_zero(capsys):
 
 
 def test_cli_validate_broken_file_returns_one(tmp_path, capsys):
-    from nem12_reader.cli import main
+    from aemo_mdff_reader.cli import main
 
     bad = tmp_path / "broken.csv"
     bad.write_text("200,NMI1234567,E1Q1,E1,E1,N1,M1,KWH,30,\n")

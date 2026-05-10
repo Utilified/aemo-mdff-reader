@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from nem12_reader import parse, parse_to_columns
+from aemo_mdff_reader import parse, parse_to_columns
 
 
 def _build(interval_minutes: int, *, days: int = 1, nmis: int = 1) -> list[list[str]]:
@@ -93,7 +93,7 @@ def test_unknown_record_indicators_are_ignored():
 def test_interval_event_constructable():
     from datetime import datetime as dt
 
-    from nem12_reader import IntervalEvent
+    from aemo_mdff_reader import IntervalEvent
 
     evt = IntervalEvent(
         nmi="NMI",
@@ -143,7 +143,7 @@ def test_utf8_bom_string_iterable():
 
 
 def test_interval_length_too_large_rejected():
-    from nem12_reader import NEM12ParseError
+    from aemo_mdff_reader import NEM12ParseError
 
     rows = [
         ["100", "NEM12", "202401010000", "X", "Y"],
@@ -156,7 +156,7 @@ def test_interval_length_too_large_rejected():
 
 
 def test_interval_length_non_integer_rejected():
-    from nem12_reader import NEM12ParseError
+    from aemo_mdff_reader import NEM12ParseError
 
     rows = [
         ["100", "NEM12", "202401010000", "X", "Y"],

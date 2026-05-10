@@ -5,19 +5,20 @@ is small and the bar for contributions is straightforward: a pull
 request that passes CI and doesn't regress the public benchmark is
 welcome.
 
-Naming: the GitHub repository is `Utilified/aemo-mdff-reader`, the
-PyPI distribution is `aemo-mdff-reader`, the Python import name is
-`nem12_reader`, and the CLI is `nem12-reader`. The repo and PyPI dist
-both adopt the AEMO spec name (MDFF — Meter Data File Format, covering
-both NEM12 and NEM13); the import name and CLI are kept short for
-ergonomics. GitHub serves redirects from the previous
-`Utilified/nem12-reader` URL so existing git pins continue to work.
+Naming: everything (GitHub repo `Utilified/aemo-mdff-reader`, PyPI
+distribution `aemo-mdff-reader`, Python import `aemo_mdff_reader`,
+CLI `aemo-mdff-reader`) is consistently named after the AEMO spec —
+MDFF, the Meter Data File Format that covers both NEM12 (interval) and
+NEM13 (accumulation) formats. GitHub serves redirects from the
+previous `Utilified/nem12-reader` repo URL so existing git pins
+continue to work; v1 callers importing `from nem12_reader …` need to
+update to `from aemo_mdff_reader …`.
 
 ## Setup
 
 ```bash
 git clone https://github.com/utilified/aemo-mdff-reader.git
-cd nem12-reader
+cd aemo-mdff-reader
 python -m venv .venv && source .venv/bin/activate
 pip install -e .[dev]
 pytest
@@ -27,7 +28,7 @@ pytest
 
 ```bash
 pytest -v
-pytest --cov=nem12_reader --cov-report=term-missing
+pytest --cov=aemo_mdff_reader --cov-report=term-missing
 ```
 
 A small, sanitized NEM12 sample lives at
@@ -56,7 +57,7 @@ current published throughput.
 - Pure stdlib in the core. **No** new required runtime dependencies.
   Optional features go behind `[project.optional-dependencies]`.
 - Type hints on all public symbols.
-- Keep `nem12_reader.types` slots-based — per-row allocation is on
+- Keep `aemo_mdff_reader.types` slots-based — per-row allocation is on
   the hot path.
 
 ## Reporting issues
@@ -96,7 +97,7 @@ Before the first release, configure these on PyPI / GitHub:
 ### Cutting a release
 
 ```bash
-# Bump version in pyproject.toml AND nem12_reader/__init__.py.
+# Bump version in pyproject.toml AND aemo_mdff_reader/__init__.py.
 # Update CHANGELOG.md with the new section.
 git commit -am "release: vX.Y.Z"
 git tag vX.Y.Z
@@ -113,5 +114,5 @@ GitHub Release at https://github.com/utilified/aemo-mdff-reader/releases.
 python -m build
 twine check --strict dist/*
 python -m venv /tmp/smoke && /tmp/smoke/bin/pip install dist/*.whl
-/tmp/smoke/bin/nem12-reader --version
+/tmp/smoke/bin/aemo-mdff-reader --version
 ```

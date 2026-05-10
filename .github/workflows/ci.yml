@@ -42,7 +42,7 @@ jobs:
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install dist/*.whl
           /tmp/smoke/bin/python -c "import nem12_reader; print(nem12_reader.__version__)"
-          /tmp/smoke/bin/nem12-reader --version
+          /tmp/smoke/bin/aemo-mdff-reader --version
 
   lint:
     name: ruff
