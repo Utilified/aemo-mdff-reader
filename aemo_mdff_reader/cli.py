@@ -223,6 +223,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         try:
             sys.stdout.flush()
         except BrokenPipeError:
+            # Pipe is already gone; nothing to flush.
             pass
     return 0
 
