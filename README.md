@@ -1,6 +1,6 @@
 # aemo-mdff-reader
 
-[![CI](https://github.com/utilified/aemo-mdff-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/utilified/aemo-mdff-reader/actions/workflows/ci.yml)
+[![CI](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/Utilified/aemo-mdff-reader/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/aemo-mdff-reader.svg)](https://pypi.org/project/aemo-mdff-reader/)
 [![Python versions](https://img.shields.io/pypi/pyversions/aemo-mdff-reader.svg)](https://pypi.org/project/aemo-mdff-reader/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -184,7 +184,7 @@ them for files that won't fit in RAM.
 ## Development
 
 ```bash
-git clone https://github.com/utilified/aemo-mdff-reader.git
+git clone https://github.com/Utilified/aemo-mdff-reader.git
 cd aemo-mdff-reader
 pip install -e .[dev]
 pytest

@@ -17,7 +17,7 @@ update to `from aemo_mdff_reader …`.
 ## Setup
 
 ```bash
-git clone https://github.com/utilified/aemo-mdff-reader.git
+git clone https://github.com/Utilified/aemo-mdff-reader.git
 cd aemo-mdff-reader
 python -m venv .venv && source .venv/bin/activate
 pip install -e .[dev]
@@ -84,7 +84,7 @@ Before the first release, configure these on PyPI / GitHub:
 1. **PyPI Trusted Publishing**: register the project at
    https://pypi.org/manage/account/publishing/ with:
    - PyPI project name: `aemo-mdff-reader`
-   - Owner: `utilified`
+   - Owner: `Utilified`
    - Repository: `aemo-mdff-reader`
    - Workflow filename: `release.yml`
    - Environment name: `pypi`
@@ -106,7 +106,7 @@ git push origin main vX.Y.Z
 
 The `Release` workflow takes over from here. Verify the published
 artefact at https://pypi.org/project/aemo-mdff-reader/ and the
-GitHub Release at https://github.com/utilified/aemo-mdff-reader/releases.
+GitHub Release at https://github.com/Utilified/aemo-mdff-reader/releases.
 
 ### Local dry run
 

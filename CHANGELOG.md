@@ -4,6 +4,25 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1 adoption notice).
+- GitHub issue forms for bug reports and feature requests, plus a
+  pull request template.
+- CodeQL workflow for static analysis on push / PR / schedule.
+- OpenSSF Scorecard workflow for supply-chain posture reporting.
+
+### Changed
+
+- GitHub Actions across all workflows pinned to commit SHAs (managed
+  by Dependabot) for supply-chain hardening.
+
+### Fixed
+
+- GitHub org casing in repository URLs (`utilified` → `Utilified`).
+
 ## [2.0.1] — 2026-05-10
 
 The 2.0.0 tag was cut before the project was renamed to
