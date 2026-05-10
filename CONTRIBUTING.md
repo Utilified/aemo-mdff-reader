@@ -24,6 +24,32 @@ pip install -e .[dev]
 pytest
 ```
 
+## CI requirements files
+
+`requirements/{dev,lint,build,audit}.txt` are hash-pinned lock files
+consumed by CI (`pip install --require-hashes`). They satisfy
+Scorecard's `PinnedDependenciesID` and protect CI against a compromised
+PyPI mirror. Dependabot refreshes them weekly.
+
+Source `.in` files are committed alongside the locks in `requirements/`.
+To regenerate manually after editing them or `pyproject.toml`:
+
+```bash
+pip install uv
+uv pip compile --generate-hashes --strip-extras --python-version 3.10 --output-file requirements/dev.txt   requirements/dev.in
+uv pip compile --generate-hashes --strip-extras --python-version 3.10 --output-file requirements/lint.txt  requirements/lint.in
+uv pip compile --generate-hashes --strip-extras --python-version 3.10 --output-file requirements/build.txt requirements/build.in
+uv pip compile --generate-hashes --strip-extras --python-version 3.10 --output-file requirements/audit.txt requirements/audit.in
+```
+
+`uv` is used over `pip-tools` because its resolver handles the
+3.10–3.12 matrix without back-tracking failures, and it emits hashes
+for every wheel of each pinned version (so a single lock file works
+across the whole CI matrix). The `--python-version 3.10` flag pins
+resolution to the lowest supported interpreter so packages whose
+latest releases dropped 3.10 are correctly stepped back to a
+compatible version.
+
 ## Running the test suite
 
 ```bash
