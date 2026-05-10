@@ -4,6 +4,18 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [2.1.0](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.4...v2.1.0) (2026-05-10)
+
+
+### Features
+
+* drop Python 3.9, hash-pin CI installs, scope release-please permissions ([447ec98](https://github.com/Utilified/aemo-mdff-reader/commit/447ec98408edabfab45d28841a2e714d54f8dd11))
+
+
+### Documentation
+
+* remove broken OpenSSF Best Practices badge ([#21](https://github.com/Utilified/aemo-mdff-reader/issues/21)) ([91a68d5](https://github.com/Utilified/aemo-mdff-reader/commit/91a68d5a4b4fd4c027488b4fe770c4cd142a7454))
+
 ## [2.0.4](https://github.com/Utilified/aemo-mdff-reader/compare/v2.0.3...v2.0.4) (2026-05-10)
 
 First release published to PyPI after the supply-chain hardening landed
