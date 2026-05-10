@@ -63,12 +63,46 @@ serials), please attach it to the issue.
 
 ## Releasing
 
-Maintainers only. Releases are tagged and published to PyPI from the
-`main` branch:
+Maintainers only. Releases are tagged and pushed to GitHub; the
+`Release` workflow then builds, signs (sigstore), publishes to PyPI
+(via Trusted Publishing), and attaches signatures to the GitHub Release.
+
+### One-time setup (per project)
+
+Before the first release, configure these on PyPI / GitHub:
+
+1. **PyPI Trusted Publishing**: register the project at
+   https://pypi.org/manage/account/publishing/ with:
+   - PyPI project name: `nem12-reader`
+   - Owner: `utilified`
+   - Repository: `nem12-reader`
+   - Workflow filename: `release.yml`
+   - Environment name: `pypi`
+2. **GitHub Environment**: in *Settings → Environments*, create an
+   environment named `pypi`. Add required reviewers if you want
+   manual approval before publish (recommended for the first few
+   releases). Without this environment, the publish job will fail with
+   a confusing "environment not found" error.
+
+### Cutting a release
 
 ```bash
+# Bump version in pyproject.toml AND nem12_reader/__init__.py.
+# Update CHANGELOG.md with the new section.
+git commit -am "release: vX.Y.Z"
 git tag vX.Y.Z
-git push --tags
+git push origin main vX.Y.Z
+```
+
+The `Release` workflow takes over from here. Verify the published
+artefact at https://pypi.org/project/nem12-reader/ and the GitHub
+Release at https://github.com/utilified/nem12-reader/releases.
+
+### Local dry run
+
+```bash
 python -m build
-twine upload dist/*
+twine check --strict dist/*
+python -m venv /tmp/smoke && /tmp/smoke/bin/pip install dist/*.whl
+/tmp/smoke/bin/nem12-reader --version
 ```

@@ -235,16 +235,47 @@ The package ships with:
 
 ## Migration from v1
 
-- All required dependencies have been dropped from the core. `pandas` is
-  now an extra (`pip install nem12-reader[pandas]`).
-- `NEMReader().to_dataframe()` and `to_csv()` continue to work; the
-  output schema has been clarified (separate `IntervalStart` /
-  `IntervalEnd` timestamps, explicit `Suffix` column).
-- The internal `nem12_reader.nemstructure` package has been removed.
-  Replace `from nem12_reader.nemstructure...` with
-  `from nem12_reader import IntervalReading, NMIDetails, Header`.
-- Use `parse()` / `parse_to_columns()` for new code — they are an order
-  of magnitude faster on large files and stream in O(1) memory.
+The `NEMReader` facade still works — `read_from_file()`,
+`read_from_array()`, `to_dataframe()`, `to_csv()`, and the
+`INTERVAL_DATA_OUTPUT_HEADERS` constant are all preserved. The
+following internals were removed in v2; if you imported them directly,
+swap to the new symbols:
+
+| v1 import (removed)                               | v2 replacement                            |
+| ------------------------------------------------- | ----------------------------------------- |
+| `from nem12_reader.nemstructure.nem12 import Header`        | `from nem12_reader import Header`         |
+| `from nem12_reader.nemstructure.nem12 import NMIData`       | `from nem12_reader import NMIDetails`     |
+| `from nem12_reader.nemstructure.nem12 import IntervalData`  | iterate `from nem12_reader import parse`  |
+| `from nem12_reader.nemstructure.nem12 import IntervalEvent` | `from nem12_reader import IntervalEvent`  |
+| `from nem12_reader.nemstructure.record import Record`       | *(removed; use the typed surface above)*  |
+| `from nem12_reader.nemstructure.record import NEMField`     | *(removed; schema is hard-coded in v2)*   |
+| `from nem12_reader.nemstructure.nem13 import AccummulationData` | `from nem12_reader import AccumulationReading` |
+| `NEMReader().get_parent(...)` / private `__tree`            | *(internal; gone — use `parse()` instead)* |
+
+**Other behaviour changes**:
+
+- All required runtime dependencies have been dropped from the core.
+  `pandas` is now an opt-in extra (`pip install nem12-reader[pandas]`).
+- DataFrame columns now include explicit `IntervalStart` /
+  `IntervalEnd` timestamps and a separate `Suffix` column (the v1
+  schema only emitted `Date` + `Interval`).
+- Use `parse()` / `parse_to_columns()` for new code — they stream in
+  O(1) memory and are an order of magnitude faster on large files.
+
+## File-format tolerance
+
+The parser handles a few real-world quirks transparently:
+
+- **UTF-8 BOM** (`﻿`) at the start of a file is consumed silently
+  (path inputs are opened with `utf-8-sig`).
+- **CRLF and LF** line endings both work via `csv.reader(newline="")`.
+- Empty interval cells in a 300 row are treated as `0.0`; the
+  `quality_method` flag (e.g. `"S"`, `"F"`, `"N"`) distinguishes a
+  real zero from a missing reading.
+- Trailing optional columns on a 300 row may be omitted; the parser
+  will not raise.
+- Files containing record types we do not currently surface (e.g.
+  the `enem12` 600/610/700 family) are skipped without error.
 
 ## Development
 

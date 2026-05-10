@@ -36,7 +36,7 @@ def _build(interval_minutes: int, *, days: int = 1, nmis: int = 1) -> list[list[
     return rows
 
 
-@pytest.mark.parametrize("interval_minutes", [30, 15, 5, 1])
+@pytest.mark.parametrize("interval_minutes", [60, 30, 15, 5, 1])
 def test_supported_interval_lengths(interval_minutes):
     rows = _build(interval_minutes, days=1)
     out = list(parse(rows))
@@ -108,3 +108,60 @@ def test_interval_event_constructable():
     )
     assert evt.start_interval == 1
     assert evt.end_interval == 5
+
+
+def test_empty_file_returns_empty_iterator(tmp_path):
+    """A truly empty file produces no readings without raising."""
+    empty = tmp_path / "empty.csv"
+    empty.write_text("")
+    assert list(parse(empty)) == []
+
+
+def test_utf8_bom_path_input(tmp_path):
+    """A NEM12 file with a UTF-8 BOM is parsed correctly when given as a path."""
+    rows = _build(30, days=1)
+    text = "\n".join(",".join(r) for r in rows) + "\n"
+    p = tmp_path / "with_bom.csv"
+    # Write the BOM as raw UTF-8 bytes to ensure it's at the byte level.
+    p.write_bytes(b"\xef\xbb\xbf" + text.encode("utf-8"))
+    out = list(parse(p))
+    assert len(out) == 48
+    assert out[0].nmi == "NMI0000000"
+
+
+def test_utf8_bom_string_iterable():
+    """A BOM on the first line of a string iterable is stripped."""
+    lines = [
+        "﻿100,NEM12,202401010000,X,Y",
+        "200,NMI1234567,E1Q1,E1,E1,N1,M1,KWH,30,",
+        "300,20240101," + ",".join(["0.1"] * 48) + ",A,,,,",
+        "900",
+    ]
+    out = list(parse(lines))
+    assert len(out) == 48
+    assert out[0].nmi == "NMI1234567"
+
+
+def test_interval_length_too_large_rejected():
+    from nem12_reader import NEM12ParseError
+
+    rows = [
+        ["100", "NEM12", "202401010000", "X", "Y"],
+        # IntervalLength of 9999 minutes is well beyond a day.
+        ["200", "NMI1234567", "E1Q1", "E1", "E1", "N1", "M1", "KWH", "9999", ""],
+        ["900"],
+    ]
+    with pytest.raises(NEM12ParseError):
+        list(parse(rows))
+
+
+def test_interval_length_non_integer_rejected():
+    from nem12_reader import NEM12ParseError
+
+    rows = [
+        ["100", "NEM12", "202401010000", "X", "Y"],
+        ["200", "NMI1234567", "E1Q1", "E1", "E1", "N1", "M1", "KWH", "abc", ""],
+        ["900"],
+    ]
+    with pytest.raises(NEM12ParseError):
+        list(parse(rows))

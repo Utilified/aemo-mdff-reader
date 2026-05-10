@@ -75,7 +75,16 @@ class NMIDetails:
 
 
 class IntervalReading:
-    """A single interval reading — one cell of a 300 record."""
+    """A single interval reading — one cell of a 300 record.
+
+    Notes
+    -----
+    ``value`` is always a ``float``. Empty cells in the source NEM12
+    file are coerced to ``0.0`` so a single missing cell does not fail
+    an entire row. Use ``quality_method`` (e.g. ``"S"`` for substituted,
+    ``"F"`` for failed, ``"N"`` for null) to distinguish a real zero
+    from a missing reading.
+    """
 
     __slots__ = (
         "interval_date",
@@ -260,6 +269,14 @@ class B2BDetails:
     a paired previous/current transaction. We surface them with the
     same class and a ``record_kind`` discriminator (``"500"`` or
     ``"550"``) so callers can branch when needed.
+
+    Fields that do not apply to the current ``record_kind`` are set to
+    ``None`` (not ``""``), so callers can distinguish "structurally
+    absent for this record kind" from "present but empty in source"::
+
+        if b.record_kind == "550":
+            assert b.previous_trans_code is not None  # set
+            assert b.trans_code is None                # not in this kind
     """
 
     __slots__ = (
@@ -277,14 +294,14 @@ class B2BDetails:
     def __init__(
         self,
         record_kind: str,
-        trans_code: str = "",
-        ret_service_order: str = "",
+        trans_code: Optional[str] = None,
+        ret_service_order: Optional[str] = None,
         read_datetime: Optional[datetime] = None,
-        index_read: str = "",
-        previous_trans_code: str = "",
-        previous_ret_service_order: str = "",
-        current_trans_code: str = "",
-        current_ret_service_order: str = "",
+        index_read: Optional[str] = None,
+        previous_trans_code: Optional[str] = None,
+        previous_ret_service_order: Optional[str] = None,
+        current_trans_code: Optional[str] = None,
+        current_ret_service_order: Optional[str] = None,
     ) -> None:
         self.record_kind = record_kind
         self.trans_code = trans_code

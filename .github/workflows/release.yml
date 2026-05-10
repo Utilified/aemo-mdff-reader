@@ -68,11 +68,23 @@ jobs:
         uses: sigstore/gh-action-sigstore-python@v3.0.0
         with:
           inputs: ./dist/*.tar.gz ./dist/*.whl
+      - name: Stage signatures for the GitHub Release, then remove from dist
+        # ``pypa/gh-action-pypi-publish`` is supposed to upload only
+        # ``.whl`` / ``.tar.gz``, but we move signatures out of dist/
+        # explicitly so a future regression cannot accidentally try to
+        # upload ``.sigstore.json`` to PyPI (which would fail the run).
+        run: |
+          mkdir -p signatures
+          if compgen -G "dist/*.sigstore*" > /dev/null; then
+            mv dist/*.sigstore* signatures/
+          fi
+          ls -la dist/ signatures/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signatures
+          path: signatures/
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          # Skip the sigstore signature files (.sigstore.json) — PyPI's own
-          # ingestion handles wheels and sdists; signatures are uploaded
-          # separately to the GitHub release below.
           packages-dir: dist/
 
   github-release:
@@ -86,6 +98,10 @@ jobs:
         with:
           name: dist
           path: dist/
+      - uses: actions/download-artifact@v4
+        with:
+          name: signatures
+          path: signatures/
       - name: Create GitHub Release with notes from CHANGELOG
         uses: softprops/action-gh-release@v2
         with:
@@ -93,4 +109,4 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.whl
-            dist/*.sigstore.json
+            signatures/*

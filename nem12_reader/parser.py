@@ -90,9 +90,14 @@ def _parse_int(value: str) -> Optional[int]:
 
 
 def _parse_float(value: str) -> float:
-    # NEM12 uses decimal numbers without thousands separators. Empty string
-    # is occasionally seen for missing intervals; we treat as 0.0 rather
-    # than failing the whole row.
+    """Parse a numeric NEM12 cell.
+
+    NEM12 uses decimal numbers without thousands separators. Empty cells
+    (sometimes seen for missing intervals) are coerced to ``0.0`` so a
+    single missing cell doesn't fail an entire row. Use the row's
+    ``QualityMethod`` flag to distinguish a real zero from a missing
+    reading — see :class:`IntervalReading` for the surfaced fields.
+    """
     if value == "" or value is None:
         return 0.0
     return float(value)
@@ -110,19 +115,47 @@ class _ParserState:
         self.interval_delta: Optional[timedelta] = None
 
 
+_BOM = "﻿"
+
+
+def _strip_bom(row: Sequence[str]) -> Sequence[str]:
+    """Strip a UTF-8 BOM from the first cell of the first row, if present.
+
+    Some retailer NEM12/NEM13 exports begin with a UTF-8 BOM. When read
+    via plain UTF-8 the BOM survives into ``row[0]``, turning the record
+    indicator ``"100"`` into ``"﻿100"`` and silently breaking parsing.
+    """
+    if row and isinstance(row[0], str) and row[0].startswith(_BOM):
+        # Sequence may be tuple or list; rebuild as list to keep mutability semantics.
+        first = row[0].lstrip(_BOM)
+        return [first, *row[1:]]
+    return row
+
+
 def _open_rows(source: RowSource) -> Iterator[Sequence[str]]:
-    """Yield rows from a path, file-like, or already-iterable row source."""
-    # Path-like
+    """Yield rows from a path, file-like, or already-iterable row source.
+
+    For paths, the file is opened with the ``utf-8-sig`` encoding so a
+    leading UTF-8 BOM is consumed transparently. For file-like and
+    iterable sources, a BOM on the first row's first cell is stripped
+    explicitly.
+    """
+    # Path-like — handle BOM via utf-8-sig.
     if isinstance(source, (str, os.PathLike)):
         # newline='' is required for csv per the docs.
-        with open(os.fspath(source), newline="") as f:
+        with open(os.fspath(source), encoding="utf-8-sig", newline="") as f:
             yield from csv.reader(f)
         return
-    # File-like (has .read but is not already an iterator of rows)
+
+    # File-like (has .read but is not already an iterator of rows).
     if hasattr(source, "read") and not hasattr(source, "__next__"):
-        yield from csv.reader(source)  # type: ignore[arg-type]
+        first = True
+        for row in csv.reader(source):  # type: ignore[arg-type]
+            yield _strip_bom(row) if first else row
+            first = False
         return
-    # Iterable: peek at the first element to decide if it's raw lines or rows
+
+    # Iterable: peek at the first element to decide if it's raw lines or rows.
     it: Iterator[Any] = iter(source)
     try:
         first = next(it)
@@ -130,9 +163,22 @@ def _open_rows(source: RowSource) -> Iterator[Sequence[str]]:
         return
     chained: Iterator[Any] = itertools.chain([first], it)
     if isinstance(first, str):
-        yield from csv.reader(chained)
+        seen_first = False
+        for row in csv.reader(chained):
+            if not seen_first:
+                seen_first = True
+                yield _strip_bom(row)
+            else:
+                yield row
     else:
-        yield from chained
+        # Already-split rows. Strip BOM from first row's first cell.
+        seen_first = False
+        for row in chained:
+            if not seen_first:
+                seen_first = True
+                yield _strip_bom(row)
+            else:
+                yield row
 
 
 def parse(source: RowSource) -> Iterator[IntervalReading]:
@@ -199,6 +245,14 @@ def _parse_nmi(row: Sequence[str]) -> NMIDetails:
     # NextScheduledReadDate
     if len(row) < 9:
         raise NEM12ParseError("200 NMI row missing required fields")
+    try:
+        interval_length = int(row[8])
+    except ValueError as exc:
+        raise NEM12ParseError(f"200 NMI row has non-integer IntervalLength: {row[8]!r}") from exc
+    if interval_length <= 0 or interval_length > MINUTES_PER_DAY:
+        raise NEM12ParseError(
+            f"200 NMI row has IntervalLength={interval_length}; must be in 1..{MINUTES_PER_DAY}"
+        )
     return NMIDetails(
         nmi=row[1],
         nmi_configuration=row[2],
@@ -207,7 +261,7 @@ def _parse_nmi(row: Sequence[str]) -> NMIDetails:
         mdm_data_stream_identifier=row[5] if len(row) > 5 else "",
         meter_serial_number=row[6] if len(row) > 6 else "",
         uom=row[7],
-        interval_length=int(row[8]),
+        interval_length=interval_length,
         next_scheduled_read_date=_parse_datetime(row[9]) if len(row) > 9 else None,
     )
 
@@ -498,7 +552,10 @@ def write_csv(readings: Iterable[IntervalReading], output: Union[PathLike, IO[st
         "MSATSLoadDatetime",
     ]
     if isinstance(output, (str, os.PathLike)):
-        f = open(os.fspath(output), "w", newline="")
+        # Force UTF-8 — without an explicit encoding Python falls back to
+        # the platform default (cp1252 on Windows) which may misencode
+        # any non-ASCII characters carried over from the source file.
+        f = open(os.fspath(output), "w", encoding="utf-8", newline="")
         close = True
     else:
         f = output  # type: ignore[assignment]
@@ -762,7 +819,7 @@ def write_accumulations_csv(
         "MSATSLoadDatetime",
     ]
     if isinstance(output, (str, os.PathLike)):
-        f = open(os.fspath(output), "w", newline="")
+        f = open(os.fspath(output), "w", encoding="utf-8", newline="")
         close = True
     else:
         f = output  # type: ignore[assignment]
@@ -924,10 +981,14 @@ def nmi_checksum(nmi: str) -> int:
     """Compute the AEMO NMI checksum digit (0-9).
 
     Implements the AEMO NMI Checksum Algorithm: for the 10-character NMI,
-    each character is converted to its ASCII value; characters at odd
-    positions (counting from the right, starting at 1) are doubled; the
-    digits of all values are summed; the checksum is
+    each character is converted to its ASCII value; characters at *odd*
+    positions counting from the right (starting at 1) are doubled; the
+    decimal digits of all values are summed; the checksum is
     ``(10 - (sum % 10)) % 10``.
+
+    Iterating left-to-right (``i = 0..9``), position-from-the-right is
+    ``10 - i``, which is odd exactly when ``i`` is even — so we double
+    when ``i % 2 == 0`` (left-to-right indices 0, 2, 4, 6, 8).
 
     Raises :class:`ValueError` if ``nmi`` is not exactly 10 characters
     or contains a non-printable / non-ASCII character.
@@ -937,11 +998,9 @@ def nmi_checksum(nmi: str) -> int:
     if any(not (32 < ord(c) < 127) for c in nmi):
         raise ValueError(f"NMI contains non-printable characters: {nmi!r}")
     total = 0
-    # Iterate left-to-right; position from the right is (10 - i).
-    # Double when (10 - i) is odd, i.e. when i is even (0, 2, 4, 6, 8).
     for i, ch in enumerate(nmi):
         v = ord(ch)
-        if i % 2 == 0:
+        if i % 2 == 0:  # odd position from the right
             v *= 2
         while v:
             total += v % 10
@@ -973,6 +1032,11 @@ def validate_file(source: RowSource) -> List[str]:
     full parsing — it surfaces common issues early (missing 100 header,
     missing 900 footer, 300 row outside any 200 context, wrong 250 field
     count, NMI structural validity) so callers can fail fast.
+
+    .. note::
+       ``source`` is consumed once. Pass a path or a fresh file handle if
+       you intend to also call :func:`parse` afterward — passing a
+       generator or single-pass iterator will leave it exhausted.
     """
     issues: List[str] = []
     saw_header = False

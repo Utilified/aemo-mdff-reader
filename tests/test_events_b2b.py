@@ -70,6 +70,9 @@ def test_parse_b2b_500_record():
     assert b.ret_service_order == "RSO12345"
     assert b.read_datetime == datetime(2024, 1, 1, 0, 0, 0)
     assert b.index_read == "12345.6"
+    # 550-only fields are None on a 500 record (kind-discriminated absence).
+    assert b.previous_trans_code is None
+    assert b.current_trans_code is None
 
 
 def test_parse_b2b_550_record():
@@ -86,6 +89,9 @@ def test_parse_b2b_550_record():
     assert b.previous_ret_service_order == "RSO_PREV"
     assert b.current_trans_code == "T"
     assert b.current_ret_service_order == "RSO_CURR"
+    # 500-only fields are None on a 550 record.
+    assert b.trans_code is None
+    assert b.read_datetime is None
 
 
 def test_parse_b2b_skips_unrelated_records():

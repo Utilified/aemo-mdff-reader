@@ -143,6 +143,16 @@ def test_write_csv_roundtrip(tmp_path):
     assert "NMI" in written[0]
 
 
+def test_write_csv_writes_utf8_bytes(tmp_path):
+    """Output is UTF-8 even on platforms whose default is cp1252."""
+    out = tmp_path / "utf8.csv"
+    write_csv(parse(FIXTURE), out)
+    # If the writer fell back to a non-UTF-8 codec we'd see mojibake when
+    # reading explicitly as UTF-8. This decode succeeding is the test.
+    text = out.read_bytes().decode("utf-8")
+    assert text.startswith("NMI,")
+
+
 def test_nem_reader_backward_compat():
     rdr = NEMReader()
     rdr.read_from_file(str(FIXTURE))
