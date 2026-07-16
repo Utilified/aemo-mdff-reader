@@ -16,10 +16,10 @@ description = "Fast streaming reader for AEMO MDFF NEM12 / NEM13 metering files.
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-# Python 3.9 reached EOL in October 2025; pandas 3.0 dropped Python
-# 3.10 support. Bumping the floor to 3.11 keeps us aligned with the
-# upstream pandas/numpy/pyarrow release trains used by the dev extras.
-requires-python = ">=3.11"
+# The floor tracks the upstream pandas/numpy/pyarrow release trains used
+# by the dev extras: numpy 2.5 and pandas 3.0 are 3.12+ only, so pinning
+# to 3.11 held the lock files back on superseded releases.
+requires-python = ">=3.12"
 authors = [
     { name = "Utilified Holdings Pty Ltd" },
 ]
@@ -31,7 +31,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Office/Business :: Financial",
@@ -125,7 +124,7 @@ ignore = [
 "aemo_mdff_reader/sql/*" = ["F401", "F403", "F405", "UP031"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 files = ["aemo_mdff_reader"]
 # Optional dependencies that don't ship type stubs.
