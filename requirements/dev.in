@@ -1,7 +1,7 @@
 pytest>=7
 pytest-cov>=4
 pandas>=3
-pyarrow>=10
+pyarrow>=25.0.0
 mypy>=1.8
 ruff>=0.5
 build>=1.0
