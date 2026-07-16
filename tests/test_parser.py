@@ -29,6 +29,52 @@ def test_parse_header():
     assert h.datetime == datetime(2024, 1, 1, 0, 0, 0)
 
 
+def _rows_with_header_datetime(value):
+    """A minimal one-NMI, one-day NEM12 file with a given 100-record DateTime."""
+    return [
+        ["100", "NEM12", value, "RETAILER", "NETWORK"],
+        ["200", "NMI1234567", "E1Q1", "E1", "E1", "N1", "METER000001", "KWH", "30", ""],
+        ["300", "20240101"] + ["0.1"] * 48 + ["A", "", "", "", ""],
+        ["900"],
+    ]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "2.02607E+11",  # Excel rewrites 202607010930 in scientific notation
+        "2.4013E+13",
+        "not-a-date",
+    ],
+)
+def test_parse_tolerates_unparseable_header_datetime(value):
+    """The 100 record's DateTime is provenance — a mangled one must not
+    fail the file. Regression for Sentry UMS-API-5S, where Excel
+    round-tripping killed an entire multi-thousand-row import."""
+    readings = list(parse(_rows_with_header_datetime(value)))
+    assert len(readings) == 48
+    assert all(r.interval_date == datetime(2024, 1, 1) for r in readings)
+
+
+def test_parse_header_reports_unparseable_datetime_as_none():
+    h = parse_header(_rows_with_header_datetime("2.02607E+11"))
+    assert h is not None
+    assert h.datetime is None
+    # The rest of the header must still be read.
+    assert h.version == "NEM12"
+    assert h.from_participant == "RETAILER"
+    assert h.to_participant == "NETWORK"
+
+
+def test_parse_still_rejects_unparseable_interval_date():
+    """Tolerance is scoped to the header. A 300 record's date is real
+    read data — silently nulling it would corrupt the reads."""
+    rows = _rows_with_header_datetime("202401010000")
+    rows[2][1] = "2.02401E+11"
+    with pytest.raises(NEM12ParseError):
+        list(parse(rows))
+
+
 def test_parse_yields_correct_count():
     readings = list(parse(FIXTURE))
     # 3 × 300 records × 48 intervals/day (30-minute reads) = 144
