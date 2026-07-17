@@ -68,6 +68,19 @@ def test_validate_file_missing_header():
     assert any("100 header" in i for i in issues)
 
 
+def test_validate_file_reports_unparseable_header_datetime():
+    """``parse`` tolerates a mangled 100-record DateTime; ``validate_file``
+    is the opt-in strict pass, so it must still report it."""
+    rows = [
+        ["100", "NEM12", "2.02607E+11", "X", "Y"],
+        ["200", "NMI1234567", "E1Q1", "E1", "E1", "N1", "M1", "KWH", "30", ""],
+        ["300", "20240101"] + ["0.1"] * 48 + ["A", "", "", "", ""],
+        ["900"],
+    ]
+    issues = validate_file(rows)
+    assert any("2.02607E+11" in i for i in issues)
+
+
 def test_validate_file_missing_footer():
     rows = [
         ["100", "NEM12", "202401010000", "X", "Y"],
