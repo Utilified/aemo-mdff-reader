@@ -286,13 +286,33 @@ def parse_header(source: RowSource) -> Optional[Header]:
     return None
 
 
-def _parse_header(row: Sequence[str]) -> Header:
+def _parse_header(row: Sequence[str], *, strict: bool = False) -> Header:
+    """Parse a 100 record.
+
+    The DateTime field is file provenance: nothing in this library reads
+    it back, and interval timestamps come from the 300 records. Files
+    round-tripped through a spreadsheet routinely arrive with it mangled
+    — Excel reads the 12/14-digit value as a number and rewrites it as
+    ``2.02607E+11``, which is lossy beyond recovery. Failing the whole
+    file over an unread field is the wrong trade, so an unparseable
+    value degrades to ``None`` here.
+
+    ``strict=True`` restores the raise, for :func:`validate_file` — the
+    opt-in pass whose job is to report exactly this kind of damage.
+    """
     # 100, VersionHeader, DateTime, FromParticipant, ToParticipant
     if len(row) < 3:
         raise NEM12ParseError("100 header row missing required fields")
+    file_datetime: Optional[datetime] = None
+    if len(row) > 2:
+        try:
+            file_datetime = _parse_datetime(row[2])
+        except NEM12ParseError:
+            if strict:
+                raise
     return Header(
         version=row[1] if len(row) > 1 else "",
-        datetime=_parse_datetime(row[2]) if len(row) > 2 else None,
+        datetime=file_datetime,
         from_participant=row[3] if len(row) > 3 else "",
         to_participant=row[4] if len(row) > 4 else "",
     )
@@ -1189,7 +1209,7 @@ def validate_file(source: RowSource) -> List[str]:
             if line_no != 1:
                 issues.append(f"line {line_no}: 100 header should be the first row")
             try:
-                _parse_header(row)
+                _parse_header(row, strict=True)
             except NEM12ParseError as exc:
                 issues.append(f"line {line_no}: {exc}")
         elif rec == NMI_RECORD:
