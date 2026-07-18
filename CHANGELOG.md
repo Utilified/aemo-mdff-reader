@@ -4,6 +4,14 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [3.0.1](https://github.com/Utilified/aemo-mdff-reader/compare/v3.0.0...v3.0.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* **fuzz:** install with --ignore-requires-python on the 3.11 OSS-Fuzz image ([#75](https://github.com/Utilified/aemo-mdff-reader/issues/75)) ([28605fe](https://github.com/Utilified/aemo-mdff-reader/commit/28605fe6c408891656bf106d7facdab1afe7dd8e))
+* tolerate unparseable 100-record DateTime instead of failing the file ([#73](https://github.com/Utilified/aemo-mdff-reader/issues/73)) ([ec84dd9](https://github.com/Utilified/aemo-mdff-reader/commit/ec84dd9a42c8c92445b0f6ef6fab7a1417ece220)), closes [#72](https://github.com/Utilified/aemo-mdff-reader/issues/72)
+
 ## [3.0.0](https://github.com/Utilified/aemo-mdff-reader/compare/v2.2.1...v3.0.0) (2026-07-16)
 
 
