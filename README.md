@@ -39,8 +39,8 @@ Or as a flat CSV / DataFrame:
 ```python
 from aemo_mdff_reader import parse, write_csv, to_dataframe
 
-write_csv(parse("metering.csv"), "out.csv")     # no pandas
-df = to_dataframe("metering.csv")                # needs [pandas]
+write_csv(parse("metering.csv"), "out.csv")  # no pandas
+df = to_dataframe("metering.csv")  # needs [pandas]
 ```
 
 From the command line:
@@ -59,7 +59,7 @@ Each parsed record is a slots-based class with named attributes plus a
 
 ```python
 for r in parse("metering.csv"):
-    payload = r.to_dict()              # {"nmi": "...", "value": 0.12, ...}
+    payload = r.to_dict()  # {"nmi": "...", "value": 0.12, ...}
     print(r.quality_flag, r.method_flag)  # split of the QMM field, e.g. "S", "52"
 ```
 
