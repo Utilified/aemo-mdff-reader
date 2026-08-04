@@ -3,7 +3,7 @@
 # the compile_python_fuzzer helper.
 # Pinned by SHA256 (closes Scorecard PinnedDependenciesID); Dependabot's
 # docker ecosystem keeps the digest fresh.
-FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:8476df732bcde364e001aa74b5df836ca28ff9c6acefb170cd9fb34ab07feea7
+FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:6b2b3a7e4a2da50de47f94925cffbe34747e1aae4f33d7f07ba6c681dd648b23
 
 COPY . $SRC/aemo-mdff-reader
 WORKDIR $SRC/aemo-mdff-reader
