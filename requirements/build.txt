@@ -3,7 +3,7 @@
 build==1.5.0 \
     --hash=sha256:13f3eecb844759ab66efec90ca17639bbf14dc06cb2fdf37a9010322d9c50a6f \
     --hash=sha256:302c22c3ba2a0fd5f3911918651341ebb3896176cbdec15bd421f80b1afc7647
-    # via -r build.in
+    # via -r requirements/build.in
 certifi==2026.4.22 \
     --hash=sha256:3cb2210c8f88ba2318d29b0388d1023c8492ff72ecdde4ebdaddbb13a31b1c4a \
     --hash=sha256:8d455352a37b71bf76a79caa83a3d6c25afee4a385d632127b6afb3963f1c580
@@ -366,9 +366,9 @@ nh3==0.3.5 \
     --hash=sha256:eeedc90ed8c42c327e8e10e621ccfa314fc6cce35d5929f4297ff1cdb89667c4 \
     --hash=sha256:fe3a787dc76b50de6bee54ef242f26c41dfe47654428e3e94f0fae5bb6dd2cc1
     # via readme-renderer
-packaging==26.2 \
-    --hash=sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e \
-    --hash=sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661
+packaging==26.3 \
+    --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
+    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
     # via
     #   build
     #   twine
@@ -415,7 +415,7 @@ secretstorage==3.5.0 \
 twine==7.0.0 \
     --hash=sha256:85cdb29c518efef867360ae4acd4b0dfd61c8654a22fca08e6f8539f05022177 \
     --hash=sha256:b854164df26db268af05f49aa5c0344b10e27a494343ff05b1e0bad3b135f5a7
-    # via -r build.in
+    # via -r requirements/build.in
 urllib3==2.7.0 \
     --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
