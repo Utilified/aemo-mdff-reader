@@ -1084,19 +1084,30 @@ def _parse_interval_event(
     def _get(i: int) -> str:
         return row[i] if i < len(row) else ""
 
-    intervals_per_day = MINUTES_PER_DAY // nmi.interval_length
+    # An IntervalLength that does not divide the day has no well-defined interval
+    # count, so the ceiling is unknowable; the 1.. floor still applies. Mirrors the
+    # guard used wherever else intervals-per-day is derived.
+    il = nmi.interval_length
+    intervals_per_day = MINUTES_PER_DAY // il if il > 0 and MINUTES_PER_DAY % il == 0 else None
+
     bounds = []
     for idx, name in ((1, "StartInterval"), (2, "EndInterval")):
         try:
             bound = int(row[idx])
         except ValueError as exc:
             raise NEM12ParseError(f"400 event row has non-integer {name}: {row[idx]!r}") from exc
-        if not 1 <= bound <= intervals_per_day:
+        if bound < 1 or (intervals_per_day is not None and bound > intervals_per_day):
+            ceiling = "" if intervals_per_day is None else f"..{intervals_per_day}"
             raise NEM12ParseError(
-                f"400 event row has {name}={bound}; must be in "
-                f"1..{intervals_per_day} for IntervalLength={nmi.interval_length}"
+                f"400 event row has {name}={bound}; must be in 1{ceiling} for IntervalLength={il}"
             )
         bounds.append(bound)
+
+    if bounds[0] > bounds[1]:
+        raise NEM12ParseError(
+            f"400 event row has StartInterval={bounds[0]} after EndInterval={bounds[1]}; "
+            "the range is inverted"
+        )
 
     return IntervalEvent(
         nmi=nmi.nmi,
