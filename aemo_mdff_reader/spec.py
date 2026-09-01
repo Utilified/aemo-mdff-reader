@@ -41,8 +41,8 @@ ALLOWED_INTERVAL_LENGTHS: FrozenSet[int] = frozenset({5, 15, 30})
 
 #: DirectionIndicator allowed values per the spec.
 DIRECTION_INDICATORS: Dict[str, str] = {
-    "I": "Import (energy flows from the connection point to the grid)",
-    "E": "Export (energy flows from the grid to the connection point)",
+    "I": "Import (energy flows from the grid to the connection point)",
+    "E": "Export (energy flows from the connection point to the grid)",
 }
 
 

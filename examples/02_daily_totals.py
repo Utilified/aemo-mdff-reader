@@ -18,7 +18,17 @@ from aemo_mdff_reader.aggregate import daily_totals
 def main(path: str) -> None:
     writer = csv.writer(sys.stdout)
     writer.writerow(
-        ["NMI", "Register", "Suffix", "UOM", "Date", "Total", "IntervalCount", "QualityFlags"]
+        [
+            "NMI",
+            "Register",
+            "Suffix",
+            "UOM",
+            "Date",
+            "Total",
+            "IntervalCount",
+            "MissingCount",
+            "QualityFlags",
+        ]
     )
     for d in daily_totals(parse(path)):
         writer.writerow(
@@ -30,6 +40,7 @@ def main(path: str) -> None:
                 d.interval_date.strftime("%Y-%m-%d"),
                 f"{d.total:.4f}",
                 d.interval_count,
+                d.missing_count,
                 "|".join(sorted(d.unique_quality_flags)),
             ]
         )

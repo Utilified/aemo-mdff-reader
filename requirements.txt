@@ -4,7 +4,6 @@
 # Optional features can be enabled via extras:
 #   pip install aemo-mdff-reader[pandas]   # to_dataframe(), parquet output
 #   pip install aemo-mdff-reader[parquet]  # parquet output (pandas + pyarrow)
-#   pip install aemo-mdff-reader[mysql]    # SQL persistence (Storer)
 #   pip install aemo-mdff-reader[dev]      # test suite, linting
 #
 # This file is kept for ``pip install -r requirements.txt`` users; it

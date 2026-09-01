@@ -61,11 +61,15 @@ class DailyTotal(NamedTuple):
     """A single channel's total energy / quantity for a calendar day.
 
     ``total`` is the sum of ``IntervalReading.value`` for every reading
-    that fell on ``interval_date``. ``interval_count`` is the number of
-    readings summed (useful for spotting partial days). ``unique_quality_flags``
-    is the set of distinct 1-character quality flags seen — a single
-    ``{"A"}`` means the day is fully Actual, anything else hints at
-    substituted or estimated data.
+    that fell on ``interval_date``. Readings with a ``None`` value are
+    *missing*, not zero: they are excluded from ``total`` and from
+    ``interval_count``, and counted in ``missing_count`` instead — so a
+    day with any ``missing_count > 0`` is an incomplete total, not a
+    lower one. ``interval_count`` is the number of readings summed
+    (useful for spotting partial days). ``unique_quality_flags`` is the
+    set of distinct 1-character quality flags seen — a single ``{"A"}``
+    means the day is fully Actual, anything else hints at substituted or
+    estimated data.
     """
 
     nmi: str
@@ -76,6 +80,7 @@ class DailyTotal(NamedTuple):
     total: float
     interval_count: int
     unique_quality_flags: frozenset[str]
+    missing_count: int
 
 
 def group_by_nmi(
@@ -111,13 +116,15 @@ def daily_totals(readings: Iterable[IntervalReading]) -> Iterator[DailyTotal]:
     O(1)-memory operation: we accumulate while ``(channel, date)`` stays
     constant and emit when it changes.
 
-    Empty cells in the source are coerced to ``0.0`` upstream (see
-    :class:`IntervalReading`); they are summed as zero.
+    Empty cells in the source parse to ``None`` (see
+    :class:`IntervalReading`). They are skipped rather than summed as
+    zero, and reported per day via ``DailyTotal.missing_count``.
     """
     current_key: Optional[Tuple[ChannelKey, datetime]] = None
     current_uom: str = ""
     total = 0.0
     count = 0
+    missing = 0
     flags: set[str] = set()
 
     for r in readings:
@@ -135,14 +142,19 @@ def daily_totals(readings: Iterable[IntervalReading]) -> Iterator[DailyTotal]:
                 total=total,
                 interval_count=count,
                 unique_quality_flags=frozenset(flags),
+                missing_count=missing,
             )
             current_key = key
             current_uom = r.uom
             total = 0.0
             count = 0
+            missing = 0
             flags = set()
-        total += r.value
-        count += 1
+        if r.value is None:
+            missing += 1
+        else:
+            total += r.value
+            count += 1
         if r.quality_method:
             flags.add(r.quality_method[:1])
 
@@ -156,6 +168,7 @@ def daily_totals(readings: Iterable[IntervalReading]) -> Iterator[DailyTotal]:
             total=total,
             interval_count=count,
             unique_quality_flags=frozenset(flags),
+            missing_count=missing,
         )
 
 

@@ -139,3 +139,27 @@ def test_cli_validate_broken_file_returns_one(tmp_path, capsys):
     assert rc == 1
     err = capsys.readouterr().err
     assert "100 header" in err or "900 footer" in err
+
+
+def _rows_with_interval_length(minutes, value_count):
+    return [
+        ["100", "NEM12", "202401010000", "RETAILER", "NETWORK"],
+        ["200", "NMI1234567", "E1Q1", "E1", "E1", "N1", "M1", "KWH", str(minutes), ""],
+        ["300", "20240101"] + ["1.0"] * value_count + ["A", "", "", "", ""],
+        ["900"],
+    ]
+
+
+def test_validate_file_flags_over_long_300_row():
+    """A 15-minute 300 row under a stale 30-minute 200 header must be reported."""
+    issues = validate_file(_rows_with_interval_length(30, 96))
+    assert any("300" in i and "97" in i and "48" in i for i in issues), issues
+
+
+def test_validate_file_flags_short_300_row():
+    issues = validate_file(_rows_with_interval_length(30, 20))
+    assert any("300" in i for i in issues), issues
+
+
+def test_validate_file_accepts_matching_300_row():
+    assert validate_file(_rows_with_interval_length(30, 48)) == []

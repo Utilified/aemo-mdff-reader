@@ -4,6 +4,53 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [4.0.0](https://github.com/Utilified/aemo-mdff-reader/compare/v3.0.1...v4.0.0) (2026-09-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* interval and accumulation reading values are now `float | None`. An
+  empty cell parses to `None` (missing) instead of `0.0` — a missing
+  reading must not be indistinguishable from a genuine zero in a
+  billing input. This affects `IntervalReading.value`, the `Value`
+  column in `to_columns` / `parse_to_columns` / the pandas and parquet
+  paths, and NEM13 `previous_register_read`, `current_register_read`
+  and `quantity`. `aggregate.daily_totals` skips `None` readings rather
+  than summing them as zero, excludes them from `interval_count`, and
+  reports them in the new `DailyTotal.missing_count` field.
+* the `aemo_mdff_reader.sql` subpackage and the `[mysql]` extra are
+  removed, along with `QueryBuilder`, `COLUMNS`, `Storer` and
+  `DBCredentials`. The subpackage referenced `NEMReader` attributes that
+  have not existed since v2, so every entry point raised
+  `AttributeError` on call, and its query builder interpolated
+  file-derived values into SQL unescaped. There is no replacement:
+  persist via `to_columns()` / `iter_columns_chunks()` and your own
+  parameterised inserts.
+* files that previously parsed silently now raise `NEM12ParseError`: a
+  300 row carrying more interval values than its parent 200 record's
+  IntervalLength allows, a non-numeric interval value or reason code, an
+  impossible date, and a 400 row whose StartInterval / EndInterval falls
+  outside the NMI's interval count. Trailing empty cells on a 300 row
+  (Excel padding) are tolerated and do not count against the field
+  bound.
+
+### Bug Fixes
+
+* raise on over-long 300 rows instead of silently truncating them. A
+  15-minute file under a stale 30-minute 200 header emitted 48 readings,
+  dropped the remaining 48, and took `quality_method` from a dropped
+  *value*. `validate_file` now checks 300 field counts too — it
+  previously returned clean for a 30-minute NMI carrying 288 values.
+* wrap the remaining raw `ValueError`s at the parse boundary as
+  `NEM12ParseError` (`_parse_int`, `_parse_float`, the columnar value
+  path, the 400 record's interval bounds, and the fixed-width
+  `datetime()` construction), each naming the offending field and value.
+* bound-check 400 StartInterval / EndInterval against the NMI's
+  intervals per day — `400,1,999,S` previously parsed against a
+  48-interval day.
+* correct the `spec.DIRECTION_INDICATORS` descriptions, which had Import
+  and Export the wrong way round.
+
 ## [3.0.1](https://github.com/Utilified/aemo-mdff-reader/compare/v3.0.0...v3.0.1) (2026-07-18)
 
 

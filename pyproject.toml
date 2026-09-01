@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 # Pillow / PIL precedent (``pip install Pillow`` → ``import PIL``)
 # applies here.
 name = "aemo-mdff-reader"
-version = "3.0.1"
+version = "4.0.0"
 description = "Fast streaming reader for AEMO MDFF NEM12 / NEM13 metering files. Zero required dependencies."
 readme = "README.md"
 license = "MIT"
@@ -43,7 +43,6 @@ dependencies = []
 [project.optional-dependencies]
 pandas = ["pandas>=2"]
 parquet = ["pandas>=2", "pyarrow>=10"]
-mysql = ["PyMySQL>=1.0"]
 dev = [
     "pytest>=7",
     "pytest-cov>=4",
@@ -78,7 +77,6 @@ addopts = "-ra"
 [tool.coverage.run]
 branch = true
 source = ["aemo_mdff_reader"]
-omit = ["aemo_mdff_reader/sql/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -120,8 +118,6 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011"]  # tests use assert
 "benchmarks/*" = ["E402"]  # path manipulation
-# Legacy SQL persistence module — pre-v2 code, not refactored here.
-"aemo_mdff_reader/sql/*" = ["F401", "F403", "F405", "UP031"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -129,11 +125,5 @@ strict = true
 files = ["aemo_mdff_reader"]
 # Optional dependencies that don't ship type stubs.
 [[tool.mypy.overrides]]
-module = ["pandas", "pandas.*", "pymysql", "pymysql.*", "pyarrow", "pyarrow.*"]
+module = ["pandas", "pandas.*", "pyarrow", "pyarrow.*"]
 ignore_missing_imports = true
-
-# The legacy SQL persistence module pre-dates the v2 typed core. It uses
-# pymysql, has no type annotations, and is opt-in. Skip strict checks here.
-[[tool.mypy.overrides]]
-module = ["aemo_mdff_reader.sql.*"]
-ignore_errors = true

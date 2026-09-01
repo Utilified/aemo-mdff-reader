@@ -6,7 +6,7 @@ name: ClusterFuzzLite PR fuzz
 # so PRs aren't held up by fuzzing.
 #
 # `paths` is enumerated explicitly (not `aemo_mdff_reader/**`) to skip
-# fuzzing on cli / aggregate / reader / sql changes — none of which
+# fuzzing on cli / aggregate / reader changes — none of which
 # the harnesses exercise.
 
 on:

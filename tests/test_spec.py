@@ -73,3 +73,15 @@ def test_immutable_constants_are_actually_immutable():
     # Catch accidental mutation: the *_VALUES sets must be frozenset.
     assert isinstance(spec.ALLOWED_INTERVAL_LENGTHS, frozenset)
     assert isinstance(spec.UOM_VALUES, frozenset)
+
+
+def test_direction_indicator_descriptions_are_the_right_way_round():
+    # MDFF v2.6 §5.3 — Import flows grid → connection point; Export the reverse.
+    assert (
+        spec.DIRECTION_INDICATORS["I"]
+        == "Import (energy flows from the grid to the connection point)"
+    )
+    assert (
+        spec.DIRECTION_INDICATORS["E"]
+        == "Export (energy flows from the connection point to the grid)"
+    )

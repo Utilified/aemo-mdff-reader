@@ -89,10 +89,7 @@ jobs:
         # We have no required runtime deps; this audits dev extras + tooling.
         run: pip-audit --skip-editable
       - name: Bandit static security analysis
-        # The legacy aemo_mdff_reader.sql module is opt-in (extras_require=mysql)
-        # and not refactored in v2 — exclude it from this scan, same as mypy
-        # and ruff. We scan the new core (parser, types, reader, cli).
-        run: bandit -r aemo_mdff_reader -ll --exclude aemo_mdff_reader/sql
+        run: bandit -r aemo_mdff_reader -ll
 
   build:
     name: build sdist + wheel

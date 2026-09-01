@@ -34,12 +34,11 @@ updates:
           - "twine"
           - "ruff"
           - "pre-commit"
-      # Bundle runtime extras (pandas/pyarrow/PyMySQL) minor/patch bumps; majors stay separate.
+      # Bundle runtime extras (pandas/pyarrow) minor/patch bumps; majors stay separate.
       runtime-extras-minor-patch:
         patterns:
           - "pandas"
           - "pyarrow"
-          - "PyMySQL"
         update-types:
           - "minor"
           - "patch"

@@ -11,7 +11,7 @@ Fast, zero-dependency streaming reader for AEMO **NEM12** and **NEM13**
 metering files. Implements AEMO MDFF (Meter Data File Format) v2.6.
 
 - O(1) memory — iterate through millions of intervals.
-- Pure stdlib core; pandas / PyMySQL are opt-in extras.
+- Pure stdlib core; pandas / pyarrow are opt-in extras.
 - ~2 M readings/sec on the columnar fast path.
 - Includes an `aemo-mdff-reader` CLI.
 
@@ -21,8 +21,8 @@ metering files. Implements AEMO MDFF (Meter Data File Format) v2.6.
 pip install aemo-mdff-reader
 
 # optional extras
-pip install aemo-mdff-reader[pandas]   # to_dataframe() / parquet
-pip install aemo-mdff-reader[mysql]    # SQL persistence
+pip install aemo-mdff-reader[pandas]   # to_dataframe()
+pip install aemo-mdff-reader[parquet]  # parquet output (pandas + pyarrow)
 ```
 
 ## Use
@@ -111,6 +111,13 @@ Each `parse(...)` yields an `IntervalReading` with `nmi`,
 the type stubs (`from aemo_mdff_reader import IntervalReading`) for the
 exact signatures.
 
+`value` is `float | None`: an empty cell in the source file is a
+*missing* reading and stays `None` rather than becoming `0.0`, which
+would be indistinguishable from a genuine zero. The same holds for the
+NEM13 `previous_register_read`, `current_register_read` and `quantity`
+fields. `aggregate.daily_totals` skips missing readings and reports how
+many it saw in `DailyTotal.missing_count`.
+
 ## Notes
 
 - **Spec**: AEMO Meter Data File Format Specification NEM12 & NEM13,
@@ -121,8 +128,8 @@ exact signatures.
   as constants in `aemo_mdff_reader.spec` for callers that want stricter
   validation than the parser performs.
 - **Tolerant**: UTF-8 BOM is consumed silently, LF and CRLF both work,
-  and empty interval cells are coerced to `0.0` (use `quality_method`
-  to distinguish missing from zero). Datetime fields accept the spec
+  and empty interval cells parse to `None` (missing), never `0.0`.
+  Datetime fields accept the spec
   forms (`YYYYMMDD`, `YYYYMMDDhhmmss`) and a few common non-spec
   variants (`YYYY-MM-DD`, ISO `YYYY-MM-DDTHH:MM:SS`, with or without a
   `Z` / `±HH:MM` / `±HHMM` timezone suffix — the suffix is stripped
