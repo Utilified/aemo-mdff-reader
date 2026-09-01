@@ -30,7 +30,9 @@ project follows [Semantic Versioning](https://semver.org/).
   300 row carrying more interval values than its parent 200 record's
   IntervalLength allows, a non-numeric interval value or reason code, an
   impossible date, and a 400 row whose StartInterval / EndInterval falls
-  outside the NMI's interval count.
+  outside the NMI's interval count. Trailing empty cells on a 300 row
+  (Excel padding) are tolerated and do not count against the field
+  bound.
 
 ### Bug Fixes
 

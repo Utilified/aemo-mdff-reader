@@ -153,7 +153,7 @@ def _rows_with_interval_length(minutes, value_count):
 def test_validate_file_flags_over_long_300_row():
     """A 15-minute 300 row under a stale 30-minute 200 header must be reported."""
     issues = validate_file(_rows_with_interval_length(30, 96))
-    assert any("300" in i and "96" in i and "48" in i for i in issues), issues
+    assert any("300" in i and "97" in i and "48" in i for i in issues), issues
 
 
 def test_validate_file_flags_short_300_row():

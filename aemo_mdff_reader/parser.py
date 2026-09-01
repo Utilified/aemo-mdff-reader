@@ -367,19 +367,34 @@ def _parse_nmi(row: Sequence[str]) -> NMIDetails:
     )
 
 
+def _effective_row_len(row: Sequence[str], minimum: int) -> int:
+    """Length of *row* ignoring trailing empty cells, floored at *minimum*.
+
+    Excel round-trips pad every row to the widest row's width with empty
+    cells; those must not count against the field-count upper bound.
+    """
+    effective = len(row)
+    while effective > minimum and row[effective - 1] == "":
+        effective -= 1
+    return effective
+
+
 def _check_interval_value_count(row: Sequence[str], nmi: NMIDetails, n: int) -> None:
     """Reject a 300 row carrying more values than its 200 record allows.
 
     Only checking the lower bound lets a 15-minute row sitting under a
     stale 30-minute 200 header parse as 48 readings, silently dropping
     the rest and picking up a *reading* as the QualityMethod trailer.
+    Trailing empty cells (Excel padding) are ignored.
     """
     max_fields = 2 + n + INTERVAL_TRAILER_FIELDS
-    if len(row) > max_fields:
-        actual = len(row) - 2 - INTERVAL_TRAILER_FIELDS
+    effective = _effective_row_len(row, 2 + n)
+    if effective > max_fields:
         raise NEM12ParseError(
-            f"300 row for NMI {nmi.nmi} on {row[1]} has {actual} interval values, "
-            f"expected {n} for IntervalLength={nmi.interval_length}"
+            f"300 row for NMI {nmi.nmi} on {row[1]} has {effective - 2} fields "
+            f"after IntervalDate, expected {n} interval values plus at most "
+            f"{INTERVAL_TRAILER_FIELDS} trailer fields "
+            f"for IntervalLength={nmi.interval_length}"
         )
 
 
@@ -1296,11 +1311,13 @@ def validate_file(source: RowSource) -> List[str]:
                         f"line {line_no}: 300 row has {len(row) - 2} interval values, "
                         f"expected {n} for IntervalLength={current_nmi.interval_length}"
                     )
-                elif len(row) > 2 + n + INTERVAL_TRAILER_FIELDS:
+                elif _effective_row_len(row, 2 + n) > 2 + n + INTERVAL_TRAILER_FIELDS:
                     issues.append(
                         f"line {line_no}: 300 row has "
-                        f"{len(row) - 2 - INTERVAL_TRAILER_FIELDS} interval values, "
-                        f"expected {n} for IntervalLength={current_nmi.interval_length}"
+                        f"{_effective_row_len(row, 2 + n) - 2} fields after "
+                        f"IntervalDate, expected {n} interval values plus at most "
+                        f"{INTERVAL_TRAILER_FIELDS} trailer fields "
+                        f"for IntervalLength={current_nmi.interval_length}"
                     )
         elif rec == ACCUMULATION_RECORD:
             if len(row) < 20:

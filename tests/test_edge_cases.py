@@ -84,12 +84,22 @@ def test_over_long_300_row_raises():
     msg = str(exc.value)
     assert "NMI0000000" in msg
     assert "20240101" in msg
-    assert "96" in msg and "48" in msg
+    assert "97" in msg and "48" in msg
 
 
 def test_over_long_300_row_raises_in_columns():
     with pytest.raises(NEM12ParseError):
         parse_to_columns(_stale_interval_length_rows())
+
+
+def test_trailing_empty_fields_tolerated():
+    # Excel round-trips pad rows with trailing empty cells; those must
+    # not trip the over-long check.
+    rows = _build(30, days=1)
+    idx = next(i for i, r in enumerate(rows) if r and r[0] == "300")
+    rows[idx] = rows[idx] + ["", "", ""]
+    out = list(parse(rows))
+    assert len(out) == 48
 
 
 def test_900_terminator_stops_parsing():
