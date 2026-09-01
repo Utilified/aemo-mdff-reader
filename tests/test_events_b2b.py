@@ -105,3 +105,26 @@ def test_parse_b2b_skips_unrelated_records():
     out = list(parse_b2b(rows))
     assert len(out) == 1
     assert out[0].trans_code == "T"
+
+
+def _event_rows(*event_fields):
+    return [
+        ["100", "NEM12", "202401010000", "X", "Y"],
+        ["200", "NMI1234567", "E1Q1", "E1", "E1", "N1", "M1", "KWH", "30", ""],
+        ["300", "20240101"] + ["0.1"] * 48 + ["A", "", "", "", ""],
+        list(event_fields),
+        ["900"],
+    ]
+
+
+def test_non_integer_400_interval_bounds_raise_parse_error():
+    with pytest.raises(NEM12ParseError) as exc:
+        list(parse_events(_event_rows("400", "x", "10", "S")))
+    assert "x" in str(exc.value)
+
+
+def test_out_of_range_400_interval_bounds_raise_parse_error():
+    with pytest.raises(NEM12ParseError) as exc:
+        list(parse_events(_event_rows("400", "1", "999", "S")))
+    assert "999" in str(exc.value)
+    assert "48" in str(exc.value)

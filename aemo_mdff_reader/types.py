@@ -118,11 +118,11 @@ class IntervalReading:
 
     Notes
     -----
-    ``value`` is always a ``float``. Empty cells in the source NEM12
-    file are coerced to ``0.0`` so a single missing cell does not fail
-    an entire row. Use ``quality_method`` (e.g. ``"S"`` for substituted,
-    ``"F"`` for failed, ``"N"`` for null) to distinguish a real zero
-    from a missing reading.
+    ``value`` is ``None`` when the source cell was empty — a missing
+    reading, which must not be confused with a genuine ``0.0``. Callers
+    handling billing data should decide explicitly what to do with it;
+    ``quality_method`` (e.g. ``"S"`` for substituted, ``"F"`` for
+    failed) says why the reading is what it is.
     """
 
     __slots__ = (
@@ -156,7 +156,7 @@ class IntervalReading:
         interval_start: datetime,
         interval_end: datetime,
         interval_index: int,
-        value: float,
+        value: Optional[float],
         quality_method: str,
         reason_code: Optional[int],
         reason_description: str,
@@ -262,6 +262,8 @@ class AccumulationReading:
 
     Each 250 record represents a previous + current register read pair
     plus a calculated quantity (consumption between the two reads).
+    ``previous_register_read``, ``current_register_read`` and
+    ``quantity`` are ``None`` when the source cell was empty.
 
     .. note::
        ``direction_indicator`` is stored as the raw string from the
@@ -306,17 +308,17 @@ class AccumulationReading:
         mdm_data_stream_identifier: str,
         meter_serial_number: str,
         direction_indicator: str,
-        previous_register_read: float,
+        previous_register_read: Optional[float],
         previous_register_read_datetime: Optional[datetime],
         previous_quality_method: str,
         previous_reason_code: Optional[int],
         previous_reason_description: str,
-        current_register_read: float,
+        current_register_read: Optional[float],
         current_register_read_datetime: Optional[datetime],
         current_quality_method: str,
         current_reason_code: Optional[int],
         current_reason_description: str,
-        quantity: float,
+        quantity: Optional[float],
         uom: str,
         next_scheduled_read_date: Optional[datetime],
         update_datetime: Optional[datetime],

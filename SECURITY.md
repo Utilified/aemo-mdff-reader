@@ -30,12 +30,8 @@ In scope:
 Out of scope:
 
 - Vulnerabilities in upstream Python, GitHub Actions, or any optional
-  dependency (`pandas`, `pyarrow`, `pymysql`). Please report those to
+  dependency (`pandas`, `pyarrow`). Please report those to
   their respective maintainers.
-- The legacy `aemo_mdff_reader.sql` subpackage is opt-in (`pip install
-  aemo-mdff-reader[mysql]`); SQL-injection findings there are
-  acknowledged but lower priority — the package is intended for
-  controlled internal pipelines, not user-facing query handling.
 
 ## Supported versions
 

@@ -311,3 +311,17 @@ def test_cli_invalid_date_argument():
 
     with pytest.raises(SystemExit):
         main([str(FIXTURE), "--start", "not-a-date"])
+
+
+def test_daily_totals_skips_missing_values_and_counts_them():
+    """A ``None`` reading is missing, not zero: excluded from the sum and
+    from ``interval_count``, and reported via ``missing_count``."""
+    present = _make_reading("A")
+    missing = _make_reading("A")
+    missing.value = None
+    missing.interval_index = 2
+    out = list(aggregate.daily_totals([present, missing]))
+    assert len(out) == 1
+    assert out[0].total == pytest.approx(1.0)
+    assert out[0].interval_count == 1
+    assert out[0].missing_count == 1

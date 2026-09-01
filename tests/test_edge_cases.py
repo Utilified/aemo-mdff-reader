@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from aemo_mdff_reader import parse, parse_to_columns
+from aemo_mdff_reader import NEM12ParseError, parse, parse_to_columns
 
 
 def _build(interval_minutes: int, *, days: int = 1, nmis: int = 1) -> list[list[str]]:
@@ -54,11 +54,42 @@ def test_multiple_nmis_keep_correct_context():
     assert len(out) == 3 * 48
 
 
-def test_empty_interval_value_treated_as_zero():
+def test_empty_interval_value_is_none_not_zero():
+    """A blank cell is a missing reading, not a real zero (v4 breaking change)."""
     rows = _build(30, days=1)
     rows[2][2] = ""  # blank one cell
     out = list(parse(rows))
-    assert out[0].value == 0.0
+    assert out[0].value is None
+    assert out[1].value == 1.0
+
+
+def test_empty_interval_value_is_none_in_columns():
+    rows = _build(30, days=1)
+    rows[2][2] = ""
+    cols = parse_to_columns(rows)
+    assert cols["Value"][0] is None
+    assert cols["Value"][1] == 1.0
+
+
+def _stale_interval_length_rows():
+    """A 15-minute 300 row carried under a stale 30-minute 200 header."""
+    rows = _build(30, days=1)
+    rows[2] = ["300", "20240101"] + ["1.0"] * 96 + ["A", "", "", "", ""]
+    return rows
+
+
+def test_over_long_300_row_raises():
+    with pytest.raises(NEM12ParseError) as exc:
+        list(parse(_stale_interval_length_rows()))
+    msg = str(exc.value)
+    assert "NMI0000000" in msg
+    assert "20240101" in msg
+    assert "96" in msg and "48" in msg
+
+
+def test_over_long_300_row_raises_in_columns():
+    with pytest.raises(NEM12ParseError):
+        parse_to_columns(_stale_interval_length_rows())
 
 
 def test_900_terminator_stops_parsing():

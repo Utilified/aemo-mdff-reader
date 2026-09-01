@@ -45,6 +45,12 @@ END_RECORD = "900"
 # Field counts per AEMO MDFF v2.6 (NEM12 / NEM13).
 ACCUMULATION_FIELDS = 23  # 250 record
 
+# A 300 record carries at most five trailing fields after the interval
+# values: QualityMethod, ReasonCode, ReasonDescription, UpdateDateTime,
+# MSATSLoadDateTime (MDFF v2.6 §4.4). Anything beyond that means the row
+# holds more values than the parent 200 record's IntervalLength implies.
+INTERVAL_TRAILER_FIELDS = 5
+
 MINUTES_PER_DAY = 24 * 60
 
 # Path-like is anything ``os.fspath`` can convert. Streams are anything
@@ -87,27 +93,33 @@ def _parse_datetime(value: str) -> Optional[datetime]:
         value = value[: m.start()]
 
     n = len(value)
-    if n == 14:
-        return datetime(
-            int(value[0:4]),
-            int(value[4:6]),
-            int(value[6:8]),
-            int(value[8:10]),
-            int(value[10:12]),
-            int(value[12:14]),
-        )
-    if n == 12:  # YYYYMMDDhhmm — seen in some retailer exports
-        return datetime(
-            int(value[0:4]),
-            int(value[4:6]),
-            int(value[6:8]),
-            int(value[8:10]),
-            int(value[10:12]),
-        )
-    if n == 8:
-        return datetime(int(value[0:4]), int(value[4:6]), int(value[6:8]))
-    if n == 10 and value[4] == "-" and value[7] == "-":
-        return datetime(int(value[0:4]), int(value[5:7]), int(value[8:10]))
+    # ``datetime(...)`` raises a bare ValueError on impossible components
+    # (e.g. ``20049999`` → "month must be in 1..12"); surface it as the
+    # advertised NEM12ParseError instead.
+    try:
+        if n == 14:
+            return datetime(
+                int(value[0:4]),
+                int(value[4:6]),
+                int(value[6:8]),
+                int(value[8:10]),
+                int(value[10:12]),
+                int(value[12:14]),
+            )
+        if n == 12:  # YYYYMMDDhhmm — seen in some retailer exports
+            return datetime(
+                int(value[0:4]),
+                int(value[4:6]),
+                int(value[6:8]),
+                int(value[8:10]),
+                int(value[10:12]),
+            )
+        if n == 8:
+            return datetime(int(value[0:4]), int(value[4:6]), int(value[6:8]))
+        if n == 10 and value[4] == "-" and value[7] == "-":
+            return datetime(int(value[0:4]), int(value[5:7]), int(value[8:10]))
+    except ValueError as exc:
+        raise NEM12ParseError(f"Invalid date/time value: {value!r} ({exc})") from exc
 
     # ISO 8601 date-time fall-through, e.g. ``2024-01-01T00:00:00`` or
     # ``2024-01-01 00:00:00`` (with optional microseconds). datetime's
@@ -128,21 +140,26 @@ def _parse_datetime(value: str) -> Optional[datetime]:
 def _parse_int(value: str) -> Optional[int]:
     if value == "" or value is None:
         return None
-    return int(value)
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise NEM12ParseError(f"Expected an integer field, got {value!r}") from exc
 
 
-def _parse_float(value: str) -> float:
-    """Parse a numeric NEM12 cell.
+def _parse_float(value: str) -> Optional[float]:
+    """Parse a numeric NEM12 / NEM13 cell.
 
-    NEM12 uses decimal numbers without thousands separators. Empty cells
-    (sometimes seen for missing intervals) are coerced to ``0.0`` so a
-    single missing cell doesn't fail an entire row. Use the row's
-    ``QualityMethod`` flag to distinguish a real zero from a missing
-    reading — see :class:`IntervalReading` for the surfaced fields.
+    NEM12 uses decimal numbers without thousands separators. An empty
+    cell is a *missing* reading and returns ``None`` — never ``0.0``,
+    which would be indistinguishable from a genuine zero reading in a
+    billing input.
     """
     if value == "" or value is None:
-        return 0.0
-    return float(value)
+        return None
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise NEM12ParseError(f"Expected a numeric field, got {value!r}") from exc
 
 
 class _ParserState:
@@ -350,6 +367,22 @@ def _parse_nmi(row: Sequence[str]) -> NMIDetails:
     )
 
 
+def _check_interval_value_count(row: Sequence[str], nmi: NMIDetails, n: int) -> None:
+    """Reject a 300 row carrying more values than its 200 record allows.
+
+    Only checking the lower bound lets a 15-minute row sitting under a
+    stale 30-minute 200 header parse as 48 readings, silently dropping
+    the rest and picking up a *reading* as the QualityMethod trailer.
+    """
+    max_fields = 2 + n + INTERVAL_TRAILER_FIELDS
+    if len(row) > max_fields:
+        actual = len(row) - 2 - INTERVAL_TRAILER_FIELDS
+        raise NEM12ParseError(
+            f"300 row for NMI {nmi.nmi} on {row[1]} has {actual} interval values, "
+            f"expected {n} for IntervalLength={nmi.interval_length}"
+        )
+
+
 def _emit_intervals(row: Sequence[str], state: _ParserState) -> Iterator[IntervalReading]:
     nmi = state.current_nmi
     if nmi is None:
@@ -362,6 +395,7 @@ def _emit_intervals(row: Sequence[str], state: _ParserState) -> Iterator[Interva
             f"300 row has {len(row)} fields, expected at least {expected_min} "
             f"for IntervalLength={nmi.interval_length}"
         )
+    _check_interval_value_count(row, nmi, n)
 
     interval_date = _parse_datetime(row[1])
     if interval_date is None:
@@ -473,6 +507,7 @@ def parse_to_columns(source: RowSource) -> Columns:
                 raise NEM12ParseError(
                     f"300 row has {len(row)} fields, expected at least {expected_min}"
                 )
+            _check_interval_value_count(row, nmi_obj, n)
             interval_date = _parse_datetime(row[1])
             if interval_date is None:
                 raise NEM12ParseError("300 row missing IntervalDate")
@@ -504,7 +539,13 @@ def parse_to_columns(source: RowSource) -> Columns:
                 a_iend(end)
                 a_idx(i + 1)
                 cell = row[base + i]
-                a_val(0.0 if cell == "" else float(cell))
+                if cell == "":
+                    a_val(None)
+                else:
+                    try:
+                        a_val(float(cell))
+                    except ValueError as exc:
+                        raise NEM12ParseError(f"Expected a numeric field, got {cell!r}") from exc
                 a_q(quality)
                 a_rc(reason_code)
                 a_rd(reason_desc)
@@ -1043,13 +1084,27 @@ def _parse_interval_event(
     def _get(i: int) -> str:
         return row[i] if i < len(row) else ""
 
+    intervals_per_day = MINUTES_PER_DAY // nmi.interval_length
+    bounds = []
+    for idx, name in ((1, "StartInterval"), (2, "EndInterval")):
+        try:
+            bound = int(row[idx])
+        except ValueError as exc:
+            raise NEM12ParseError(f"400 event row has non-integer {name}: {row[idx]!r}") from exc
+        if not 1 <= bound <= intervals_per_day:
+            raise NEM12ParseError(
+                f"400 event row has {name}={bound}; must be in "
+                f"1..{intervals_per_day} for IntervalLength={nmi.interval_length}"
+            )
+        bounds.append(bound)
+
     return IntervalEvent(
         nmi=nmi.nmi,
         meter_serial_number=nmi.meter_serial_number,
         register_id=nmi.register_id,
         interval_date=interval_date,
-        start_interval=int(row[1]),
-        end_interval=int(row[2]),
+        start_interval=bounds[0],
+        end_interval=bounds[1],
         quality_method=_get(3),
         reason_code=_parse_int(_get(4)),
         reason_description=_get(5),
@@ -1223,6 +1278,19 @@ def validate_file(source: RowSource) -> List[str]:
         elif rec == INTERVAL_RECORD:
             if current_nmi is None:
                 issues.append(f"line {line_no}: 300 row encountered before any 200 NMI row")
+            elif MINUTES_PER_DAY % current_nmi.interval_length == 0:
+                n = MINUTES_PER_DAY // current_nmi.interval_length
+                if len(row) < 2 + n:
+                    issues.append(
+                        f"line {line_no}: 300 row has {len(row) - 2} interval values, "
+                        f"expected {n} for IntervalLength={current_nmi.interval_length}"
+                    )
+                elif len(row) > 2 + n + INTERVAL_TRAILER_FIELDS:
+                    issues.append(
+                        f"line {line_no}: 300 row has "
+                        f"{len(row) - 2 - INTERVAL_TRAILER_FIELDS} interval values, "
+                        f"expected {n} for IntervalLength={current_nmi.interval_length}"
+                    )
         elif rec == ACCUMULATION_RECORD:
             if len(row) < 20:
                 issues.append(

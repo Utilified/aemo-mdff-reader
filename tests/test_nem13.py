@@ -153,3 +153,39 @@ def test_intervals_iterator_skips_250_rows():
 
     out = list(parse(NEM13_FIXTURE))
     assert out == []
+
+
+def test_blank_250_reads_are_none_not_zero():
+    """Missing register reads / quantity must stay missing (v4 breaking change)."""
+    row = [
+        "250",
+        "NMI",
+        "C",
+        "R",
+        "S",
+        "M",
+        "MS",
+        "I",
+        "100.0",
+        "20231201000000",
+        "A",
+        "",
+        "",
+        "200.0",
+        "20240101000000",
+        "A",
+        "",
+        "",
+        "100.0",
+        "KWH",
+        "20240401",
+        "20240102000000",
+        "20240102010000",
+    ]
+    for blank in (8, 13, 18):  # Previous/CurrentRegisterRead + Quantity
+        row[blank] = ""
+    rows = [["100", "NEM13", "202401010000", "X", "Y"], row, ["900"]]
+    a = next(iter(parse_accumulations(rows)))
+    assert a.previous_register_read is None
+    assert a.current_register_read is None
+    assert a.quantity is None

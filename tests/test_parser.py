@@ -282,3 +282,53 @@ def test_streaming_does_not_materialise_when_unused(tmp_path):
         if n == 10:
             break
     assert n == 10
+
+
+# ---------------------------------------------------------------------------
+# Typed-error boundary: malformed fields must raise NEM12ParseError, never a
+# bare ValueError leaking out of the parser internals.
+# ---------------------------------------------------------------------------
+
+
+def _rows_with_300(row):
+    return [
+        ["100", "NEM12", "202401010000", "RETAILER", "NETWORK"],
+        ["200", "NMI1234567", "E1Q1", "E1", "E1", "N1", "METER000001", "KWH", "30", ""],
+        row,
+        ["900"],
+    ]
+
+
+def _values(**overrides):
+    vals = ["0.1"] * 48
+    for i, v in overrides.items():
+        vals[int(i)] = v
+    return vals
+
+
+def test_non_numeric_interval_value_raises_parse_error():
+    rows = _rows_with_300(["300", "20240101", *_values(**{"0": "N/A"}), "A", "", "", "", ""])
+    with pytest.raises(NEM12ParseError) as exc:
+        list(parse(rows))
+    assert "N/A" in str(exc.value)
+
+
+def test_non_numeric_interval_value_raises_parse_error_in_columns():
+    rows = _rows_with_300(["300", "20240101", *_values(**{"0": "N/A"}), "A", "", "", "", ""])
+    with pytest.raises(NEM12ParseError) as exc:
+        parse_to_columns(rows)
+    assert "N/A" in str(exc.value)
+
+
+def test_non_integer_reason_code_raises_parse_error():
+    rows = _rows_with_300(["300", "20240101", *_values(), "A", "abc", "", "", ""])
+    with pytest.raises(NEM12ParseError) as exc:
+        list(parse(rows))
+    assert "abc" in str(exc.value)
+
+
+def test_impossible_date_raises_parse_error():
+    rows = _rows_with_300(["300", "20049999", *_values(), "A", "", "", "", ""])
+    with pytest.raises(NEM12ParseError) as exc:
+        list(parse(rows))
+    assert "20049999" in str(exc.value)
