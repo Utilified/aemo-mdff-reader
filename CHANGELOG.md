@@ -4,6 +4,39 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [2.2.1](https://github.com/Utilified/aemo-mdff-reader/compare/v4.0.0...v2.2.1) (2026-09-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* reading values are float | None; the [mysql] extra and aemo_mdff_reader.sql (QueryBuilder, Storer) are removed; files with over-long 300 rows, non-numeric values, impossible dates or out-of-range 400 bounds now raise NEM12ParseError where they previously parsed.
+* minimum Python version is now 3.12. Users on 3.11 should pin to aemo-mdff-reader<2.3.
+* minimum Python version is now 3.11. Users on 3.10 should pin to `aemo-mdff-reader<2.2`.
+
+### Features
+
+* drop Python 3.10, bump dev floor to pandas 3 / numpy 2.x ([876c863](https://github.com/Utilified/aemo-mdff-reader/commit/876c863186a7de14b05fa35b0a864b38e4292701))
+* drop Python 3.11 support ([#70](https://github.com/Utilified/aemo-mdff-reader/issues/70)) ([383ff6d](https://github.com/Utilified/aemo-mdff-reader/commit/383ff6de7430372a8a67bd1b1a8271aa849f53eb))
+* drop Python 3.9, hash-pin CI installs, scope release-please permissions ([447ec98](https://github.com/Utilified/aemo-mdff-reader/commit/447ec98408edabfab45d28841a2e714d54f8dd11))
+
+
+### Bug Fixes
+
+* changed quality method on interval event record to NOTREQUIRED ([dc75bc2](https://github.com/Utilified/aemo-mdff-reader/commit/dc75bc2b39ab8a1fba7b3f62f998296accc6671d))
+* **ci:** use renamed package in coverage flag, smoke step, bandit scope ([e96c582](https://github.com/Utilified/aemo-mdff-reader/commit/e96c5820ab17fae0854260d4cf5505cb7f130a9a))
+* **fuzz:** install with --ignore-requires-python on the 3.11 OSS-Fuzz image ([#75](https://github.com/Utilified/aemo-mdff-reader/issues/75)) ([28605fe](https://github.com/Utilified/aemo-mdff-reader/commit/28605fe6c408891656bf106d7facdab1afe7dd8e))
+* release-please dispatch + SBOM directory creation ([#17](https://github.com/Utilified/aemo-mdff-reader/issues/17)) ([8e3cd13](https://github.com/Utilified/aemo-mdff-reader/commit/8e3cd13ca11bad3399efd2e5fd2fe5ae6bcb2a90))
+* rename release-please config to default path ([#15](https://github.com/Utilified/aemo-mdff-reader/issues/15)) ([843d25f](https://github.com/Utilified/aemo-mdff-reader/commit/843d25ff8c35944e08eb70ebfdb076acdf1c9855))
+* tolerate unparseable 100-record DateTime instead of failing the file ([#73](https://github.com/Utilified/aemo-mdff-reader/issues/73)) ([ec84dd9](https://github.com/Utilified/aemo-mdff-reader/commit/ec84dd9a42c8c92445b0f6ef6fab7a1417ece220)), closes [#72](https://github.com/Utilified/aemo-mdff-reader/issues/72)
+* v4 correctness pass — truncated 300 rows, missing-vs-zero readings, typed errors, dead sql removal ([#111](https://github.com/Utilified/aemo-mdff-reader/issues/111)) ([5079858](https://github.com/Utilified/aemo-mdff-reader/commit/5079858c8e00e576859f008e565db969e6a24163))
+
+
+### Documentation
+
+* add SECURITY.md disclosure policy ([cca1eb0](https://github.com/Utilified/aemo-mdff-reader/commit/cca1eb05b5c2e48fd3126e927accf8fbefe01c86))
+* bake CI hardening into a 2.2.1 release ([7798a08](https://github.com/Utilified/aemo-mdff-reader/commit/7798a08fe753abff9136c993ea4efc87bddc3a0d))
+* remove broken OpenSSF Best Practices badge ([#21](https://github.com/Utilified/aemo-mdff-reader/issues/21)) ([91a68d5](https://github.com/Utilified/aemo-mdff-reader/commit/91a68d5a4b4fd4c027488b4fe770c4cd142a7454))
+
 ## [4.0.0](https://github.com/Utilified/aemo-mdff-reader/compare/v3.0.1...v4.0.0) (2026-09-01)
 
 
