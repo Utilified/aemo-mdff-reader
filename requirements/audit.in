@@ -1,4 +1,5 @@
 pip-audit
+typing-extensions
 bandit
 setuptools
 wheel
