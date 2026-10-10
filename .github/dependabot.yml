@@ -3,8 +3,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "friday"
+      interval: "monthly"
       time: "21:00"
       timezone: "Australia/Melbourne"
     cooldown:
@@ -28,8 +27,7 @@ updates:
   - package-ecosystem: "docker"
     directory: "/.clusterfuzzlite"
     schedule:
-      interval: "weekly"
-      day: "friday"
+      interval: "monthly"
       time: "21:00"
       timezone: "Australia/Melbourne"
     cooldown:
@@ -59,6 +57,10 @@ updates:
     open-pull-requests-limit: 5
     # Group routine bumps together so we don't flood the PR queue.
     groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
       dev-dependencies:
         patterns:
           - "pytest*"
@@ -94,6 +96,10 @@ updates:
     labels: ["dependencies", "pip"]
     open-pull-requests-limit: 5
     groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
       ci-requirements:
         patterns:
           - "*"
