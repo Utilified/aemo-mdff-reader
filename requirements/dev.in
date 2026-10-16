@@ -1,9 +1,9 @@
 pytest>=7
 pytest-cov>=4
 pandas>=3.0.5
-pyarrow>=25.0.1
+pyarrow>=26.0.0
 mypy>=2.4.0
-ruff>=0.16.10
+ruff>=0.17.0
 build>=1.6.1
 twine>=7.0.0
 packaging>=24.2
