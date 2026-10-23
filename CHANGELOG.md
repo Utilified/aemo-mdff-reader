@@ -4,6 +4,13 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [4.0.1](https://github.com/Utilified/aemo-mdff-reader/compare/v4.0.0...v4.0.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** bump certifi to 2026.10.19 for PYSEC-2026-4320 ([#145](https://github.com/Utilified/aemo-mdff-reader/issues/145)) ([7b66f2a](https://github.com/Utilified/aemo-mdff-reader/commit/7b66f2a4cd2b5e333c5258dcfd41277909c9ac62))
+
 ## [4.0.0](https://github.com/Utilified/aemo-mdff-reader/compare/v3.0.1...v4.0.0) (2026-09-01)
 
 
