@@ -1,0 +1,13 @@
+name: Dependabot Auto Merge
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  auto-merge:
+    uses: Utilified/.github/.github/workflows/reusable-dependabot-auto-merge.yml@255a3d39f67a2da209e8ba147dd2b457b74c98be # main

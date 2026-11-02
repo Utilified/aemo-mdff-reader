@@ -1,0 +1,14 @@
+name: PR Title
+
+# The squash commit takes its subject from the PR title, so it must be a
+# conventional commit. See Utilified/.github reusable-pr-title.yml.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    uses: Utilified/.github/.github/workflows/reusable-pr-title.yml@255a3d39f67a2da209e8ba147dd2b457b74c98be # main
