@@ -1,9 +1,9 @@
 name: ClusterFuzzLite scheduled batch fuzz
 
-# Longer scheduled fuzz session that grows the persistent corpus and
-# crash storage in the gh-pages branch. Runs each sanitizer in turn
-# for ``fuzz-seconds``. Storage requires a ``gh-pages`` branch; the
-# action creates it on first run.
+# Longer scheduled fuzz session. Runs each sanitizer in turn for
+# ``fuzz-seconds``. No ``storage-repo`` is configured, so corpus and
+# crashes are kept as workflow artifacts and the job only needs a
+# read-only token.
 
 on:
   schedule:
@@ -18,8 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
-      # cflite needs write access to gh-pages for corpus + crash storage.
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
