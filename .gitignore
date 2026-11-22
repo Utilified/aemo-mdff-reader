@@ -7,8 +7,7 @@ env/
 .vscode/
 .idea/
 
-# AI assistant scratch — kept local, not shared with the public repo.
-CLAUDE.md
+# Local agent state (worktrees, settings)
 .claude/
 
 # Python
