@@ -4,6 +4,13 @@ All notable changes are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project follows [Semantic Versioning](https://semver.org/).
 
+## [4.0.2](https://github.com/Utilified/aemo-mdff-reader/compare/v4.0.1...v4.0.2) (2026-11-22)
+
+
+### Documentation
+
+* track agent instructions as AGENTS.md ([#167](https://github.com/Utilified/aemo-mdff-reader/issues/167)) ([5b8c8a2](https://github.com/Utilified/aemo-mdff-reader/commit/5b8c8a227efb8cec2dec49d770f830fe8793f28b))
+
 ## [4.0.1](https://github.com/Utilified/aemo-mdff-reader/compare/v4.0.0...v4.0.1) (2026-11-02)
 
 
